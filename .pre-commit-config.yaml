@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff
+  - repo: local
+    hooks:
+      - id: pytest-fast
+        name: pytest (unit)
+        entry: .venv/Scripts/python -m pytest -q tests/test_cost.py tests/test_planner.py tests/test_verifier.py tests/test_geo_and_layers.py
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: tsc
+        name: tsc --noEmit
+        entry: bash -c "cd web && npx tsc --noEmit"
+        language: system
+        pass_filenames: false
+        files: ^web/src/

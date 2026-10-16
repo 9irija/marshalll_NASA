@@ -1,0 +1,18 @@
+[project]
+name = "marswalk"
+version = "0.1.0"
+description = "Marswalk Mission Planner: EVA route, consumables and return-envelope planning at Jezero crater"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 150
+target-version = "py311"
+extend-exclude = ["web", "data", "corpus/chunks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E731", "B008", "B023", "B905"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

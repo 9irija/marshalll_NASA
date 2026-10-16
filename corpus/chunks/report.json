@@ -1,0 +1,103 @@
+{
+ "ok": [
+  {
+   "id": "std3001_spacesuits",
+   "chunks": 53
+  },
+  {
+   "id": "walking_to_olympus",
+   "chunks": 285
+  },
+  {
+   "id": "apollo12_surface_ops",
+   "chunks": 185
+  },
+  {
+   "id": "hls_ez_compendium",
+   "chunks": 116
+  },
+  {
+   "id": "hls_announcement",
+   "chunks": 3
+  },
+  {
+   "id": "jezero_olivine_carbonate",
+   "chunks": 28
+  },
+  {
+   "id": "crism_parameters",
+   "chunks": 77
+  },
+  {
+   "id": "hirise_dtm_about",
+   "chunks": 5
+  },
+  {
+   "id": "trek_api",
+   "chunks": 2
+  }
+ ],
+ "failed": [
+  {
+   "id": "surface_eva_drivers",
+   "url": "https://ntrs.nasa.gov/api/citations/20230014957/downloads/Surface%20EVA%20Architectural%20Drivers.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "advanced_eva_tp2004",
+   "url": "https://ntrs.nasa.gov/api/citations/20040200983/downloads/20040200983.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "eva_tech_status_2011",
+   "url": "https://ntrs.nasa.gov/api/citations/20110012989/downloads/20110012989.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "ices2025_traverse",
+   "url": "https://ntrs.nasa.gov/api/citations/20250001829/downloads/ICES%202025%20TraverseModel.pdf?attachment=true",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "apollo_plss_performance",
+   "url": "https://ntrs.nasa.gov/api/citations/19720019460/downloads/19720019460.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "eva_hw_ops_overview",
+   "url": "https://ntrs.nasa.gov/api/citations/20140000238/downloads/20140000238.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "in_suit_nutrition",
+   "url": "https://ntrs.nasa.gov/api/citations/20220019344/downloads/Recommendations_for_In-Suit_Nutrition_2022-12-31_STRIVES.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "alsj_1979",
+   "url": "https://www.nasa.gov/wp-content/uploads/static/history/alsj/19790073512_1979073512.pdf",
+   "error": "HTTP Error 404: Not Found"
+  },
+  {
+   "id": "hls_ntrs_2016",
+   "url": "https://ntrs.nasa.gov/api/citations/20160006342/downloads/20160006342.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "jezero_campaign_sun2023",
+   "url": "https://ntrs.nasa.gov/api/citations/20230016431/downloads/Sun%20et%20al%202023%20JGR%20Planets%20Jezero%20Campaign.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "jezero_exhumation_2023",
+   "url": "https://ntrs.nasa.gov/api/citations/20230016434/downloads/Quantin%20Nataf%202023%20JGR%20Exhumation%20of%20Jezero.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  {
+   "id": "meda_ssr2021",
+   "url": "https://ntrs.nasa.gov/api/citations/20210014064/downloads/Rodriguez-Manfredi_et_al-2021-Space_Science_Reviews.pdf",
+   "error": "HTTP Error 403: Forbidden"
+  }
+ ],
+ "chunks": 754
+}

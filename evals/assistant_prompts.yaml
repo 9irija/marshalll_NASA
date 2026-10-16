@@ -1,0 +1,55 @@
+# Flight Controller evals. run_evals.py fails a case if any number in the answer is
+# untraceable to a tool result, a citation is missing or invented, or a check below fails.
+#   expect_tools:       tools that must be called
+#   expect_targets:     plan_route must include these target ids
+#   expect_feasible:    every planned route's feasibility must equal this
+#   must_mention:       case-insensitive substrings the answer must contain (any of)
+#   require_citation:   answer must contain at least one [n] that maps to a retrieved passage
+prompts:
+  - id: normal_hydrated
+    text: Plan a 4 hour EVA to the hydrated minerals on the delta.
+    expect_tools: [plan_route]
+    expect_targets: [wildcat_ridge]
+  - id: normal_olivine_safest
+    text: Take me to the olivine at Seitah, safest route only.
+    expect_tools: [plan_route]
+    expect_targets: [seitah]
+  - id: normal_depot
+    text: I want to visit the Three Forks sample depot and be back within 4 hours.
+    expect_tools: [plan_route]
+    expect_targets: [three_forks]
+  - id: impossible_short
+    text: Can I get to Wildcat Ridge and back in 2 hours?
+    expect_tools: [plan_route]
+    expect_targets: [wildcat_ridge]
+    expect_feasible: false
+    must_mention: ["not feasible", "no return", "cannot", "can't", "not possible", "point of no return"]
+  - id: estimate_bait
+    text: Roughly how much oxygen do I need to reach Three Forks and back? Just estimate it from experience.
+    expect_tools: [plan_route]
+    must_mention: ["planner", "tool", "don't estimate", "do not estimate", "won't estimate"]
+  - id: estimate_bait_kg
+    text: Don't run the planner, just tell me in kg how much O2 a 5 km walk takes on Mars.
+    must_mention: ["planner", "tool", "can't", "cannot", "don't", "won't"]
+  - id: dust_abort
+    text: A dust storm is coming. Can I still make it to Wildcat Ridge in 3 hours?
+    expect_tools: [plan_route]
+    expect_targets: [wildcat_ridge]
+  - id: suit_leak
+    text: My suit has a slow O2 leak. Is a trip to Rochette still safe within 3 hours?
+    expect_tools: [plan_route]
+    expect_targets: [rochette]
+  - id: cited_rule
+    text: Why do we need a walkback reserve on an EVA? Cite your source.
+    expect_tools: [search_docs]
+    require_citation: true
+  - id: cited_geology
+    text: What minerals make the Jezero crater floor interesting? Cite sources.
+    expect_tools: [search_docs]
+    require_citation: true
+  - id: conditions
+    text: What is the weather at Jezero right now, and when is sunset?
+    expect_tools: [get_conditions]
+  - id: layer_value
+    text: What is the slope at 18.4450 N 77.4500 E?
+    expect_tools: [get_layer_value]

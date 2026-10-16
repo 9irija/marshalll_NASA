@@ -1,0 +1,91 @@
+# Public NASA / mission documents the Flight Controller may cite.
+# Every URL was found through search and is fetched by pipeline/build_corpus.py;
+# documents that fail to download are reported and skipped, never invented.
+sources:
+  # --- EVA consumables, walkback and abort -----------------------------------------------
+  - id: surface_eva_drivers
+    title: Surface EVA Architectural Drivers (NASA NTRS 20230014957)
+    url: https://ntrs.nasa.gov/api/citations/20230014957/downloads/Surface%20EVA%20Architectural%20Drivers.pdf
+    topic: eva
+  - id: advanced_eva_tp2004
+    title: Advanced EVA Capabilities, NASA/TP-2004-212068
+    url: https://ntrs.nasa.gov/api/citations/20040200983/downloads/20040200983.pdf
+    topic: eva
+  - id: eva_tech_status_2011
+    title: Extravehicular Activity Technology Development Status (NASA NTRS 20110012989)
+    url: https://ntrs.nasa.gov/api/citations/20110012989/downloads/20110012989.pdf
+    topic: eva
+  - id: ices2025_traverse
+    title: ICES-2025-129 EVA traverse model (NASA NTRS 20250001829)
+    url: https://ntrs.nasa.gov/api/citations/20250001829/downloads/ICES%202025%20TraverseModel.pdf?attachment=true
+    topic: eva
+  - id: std3001_spacesuits
+    title: NASA-STD-3001 Technical Brief, Spacesuits (OCHMO-TB-050)
+    url: https://www.nasa.gov/wp-content/uploads/2025/09/ochmo-tb-050-spacesuits.pdf
+    topic: eva
+  - id: apollo_plss_performance
+    title: Apollo Portable Life Support System Performance Report (Carson, NASA NTRS 19720019460)
+    url: https://ntrs.nasa.gov/api/citations/19720019460/downloads/19720019460.pdf
+    topic: eva
+  - id: walking_to_olympus
+    title: Walking to Olympus, An EVA Chronology (NASA SP-4507)
+    url: https://www.nasa.gov/wp-content/uploads/2023/04/sp-4507.pdf
+    topic: eva
+  - id: eva_hw_ops_overview
+    title: Extravehicular Activity Hardware and Operations Overview (NASA NTRS 20140000238)
+    url: https://ntrs.nasa.gov/api/citations/20140000238/downloads/20140000238.pdf
+    topic: eva
+  - id: in_suit_nutrition
+    title: Recommendations for In-Suit Nutrition, NASA/TP-20220019344 (EVA metabolic rates)
+    url: https://ntrs.nasa.gov/api/citations/20220019344/downloads/Recommendations_for_In-Suit_Nutrition_2022-12-31_STRIVES.pdf
+    topic: eva
+  - id: alsj_1979
+    title: Apollo Lunar Surface Journal reference, NASA 19790073512
+    url: https://www.nasa.gov/wp-content/uploads/static/history/alsj/19790073512_1979073512.pdf
+    topic: eva
+  - id: apollo12_surface_ops
+    title: Apollo 12 Lunar Surface Operations Plan (Apollo Lunar Surface Journal)
+    url: https://apollojournals.org/alsj//a12/a12LSOpsPlan_HSI-209398.pdf
+    topic: eva
+  # --- Human landing sites and Jezero ------------------------------------------------------
+  - id: hls_ez_compendium
+    title: First Landing Site/Exploration Zone Workshop Polling and Feedback Compendium (NASA, 2015)
+    url: https://www.nasa.gov/wp-content/uploads/2015/06/post_hls2_workshop_polling_and_feedback_compendium.pdf
+    topic: jezero
+  - id: hls_announcement
+    title: First Landing Site/Exploration Zone Workshop announcement (NASA, 2015)
+    url: https://www.nasa.gov/wp-content/uploads/2015/06/first-landing-site-announcement.pdf
+    topic: jezero
+  - id: hls_ntrs_2016
+    title: Human Landing Sites for Mars (NASA NTRS 20160006342)
+    url: https://ntrs.nasa.gov/api/citations/20160006342/downloads/20160006342.pdf
+    topic: jezero
+  - id: jezero_campaign_sun2023
+    title: Sun et al. 2023, Overview of the Jezero crater floor campaign, JGR Planets (NASA NTRS 20230016431)
+    url: https://ntrs.nasa.gov/api/citations/20230016431/downloads/Sun%20et%20al%202023%20JGR%20Planets%20Jezero%20Campaign.pdf
+    topic: jezero
+  - id: jezero_exhumation_2023
+    title: Quantin-Nataf et al. 2023, Exhumation history of the Jezero crater floor (NASA NTRS 20230016434)
+    url: https://ntrs.nasa.gov/api/citations/20230016434/downloads/Quantin%20Nataf%202023%20JGR%20Exhumation%20of%20Jezero.pdf
+    topic: jezero
+  - id: jezero_olivine_carbonate
+    title: Brown et al., Olivine-Carbonate Mineralogy of Jezero Crater (arXiv 1801.09841)
+    url: https://arxiv.org/pdf/1801.09841
+    topic: jezero
+  # --- Dataset documentation -----------------------------------------------------------------
+  - id: crism_parameters
+    title: Viviano-Beck et al. 2014, Revised CRISM spectral parameters and summary products, JGR Planets
+    url: http://crism.jhuapl.edu/data/CRISM_workshop_2017/Resources/Publications/Viviano-Beck_JGR_2014_summary_parameters.pdf
+    topic: data
+  - id: meda_ssr2021
+    title: Rodriguez-Manfredi et al. 2021, The Mars Environmental Dynamics Analyzer (MEDA), Space Science Reviews
+    url: https://ntrs.nasa.gov/api/citations/20210014064/downloads/Rodriguez-Manfredi_et_al-2021-Space_Science_Reviews.pdf
+    topic: data
+  - id: hirise_dtm_about
+    title: HiRISE Digital Terrain Models, about page (University of Arizona)
+    url: https://www.uahirise.org/dtm/about.php
+    topic: data
+  - id: trek_api
+    title: NASA Solar System Treks WMTS layer services description
+    url: https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars
+    topic: data

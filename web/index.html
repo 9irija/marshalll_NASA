@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marswalk Mission Planner</title>
+  <meta name="description" content="Plan a Marswalk at Jezero crater: routes, consumables and the return envelope on real NASA data." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23d9a066'/%3E%3Cpath d='M6 20 Q16 12 26 20' stroke='%230f1c27' stroke-width='2.5' fill='none'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="globe" aria-label="3D view of Jezero crater"></div>
+
+  <header class="brand">
+    <h1>Marswalk</h1>
+    <p>Jezero crater, western delta</p>
+  </header>
+
+  <nav class="toolbar" aria-label="Panels">
+    <button data-drawer="chat" class="tool primary">Ask Flight Controller</button>
+    <button id="readout-toggle" class="tool mobile-only">Route details</button>
+    <button data-drawer="validate" class="tool">Check against Perseverance</button>
+    <button data-drawer="sources" class="tool">Data sources</button>
+    <button data-drawer="assumptions" class="tool">Model assumptions</button>
+    <span id="mode-badge" class="badge" hidden></span>
+  </nav>
+
+  <aside class="panel plan" id="plan" aria-label="Plan an EVA">
+    <h2>Plan an EVA</h2>
+    <label class="field-label" for="target">Destination</label>
+    <select id="target"></select>
+    <p class="hint" id="target-note"></p>
+
+    <label class="field-label" for="hours">EVA time limit <output id="hours-out">4 h</output></label>
+    <input id="hours" type="range" min="1" max="8" step="0.5" value="4" />
+
+    <fieldset class="hazards">
+      <legend class="field-label">Conditions</legend>
+      <label><input type="checkbox" id="hz-dust" /> Dust storm forecast</label>
+      <label><input type="checkbox" id="hz-leak" /> Suit O2 leak</label>
+    </fieldset>
+
+    <button id="plan-btn" class="cta">Plan routes</button>
+
+    <div class="routes" id="route-list" role="radiogroup" aria-label="Routes"></div>
+
+    <details class="layers" open>
+      <summary>Map layers</summary>
+      <div id="layer-list"></div>
+    </details>
+    <div id="conditions" class="conditions"></div>
+  </aside>
+
+  <aside class="panel readout" id="readout" aria-label="Selected route">
+    <div id="status" class="status" role="status"></div>
+    <dl class="totals" id="totals"></dl>
+    <h3>Elevation profile</h3>
+    <div id="chart-elev" class="chart"></div>
+    <h3>Consumables remaining</h3>
+    <div id="chart-cons" class="chart"></div>
+    <div class="readout-actions">
+      <button id="inject-dust" class="ghost">Inject dust storm now</button>
+      <button id="inject-leak" class="ghost">Inject suit leak now</button>
+      <a id="cuff" class="ghost" target="_blank" rel="noopener">Print cuff checklist</a>
+    </div>
+  </aside>
+
+  <section class="clock" aria-label="EVA timeline">
+    <button id="play" class="play" aria-label="Play">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path id="play-icon" d="M7 4 L20 12 L7 20 Z" fill="currentColor"/></svg>
+    </button>
+    <div class="clock-time"><span class="tplus">T+</span><span id="clock">0:00</span></div>
+    <div class="scrub">
+      <div class="track" id="track">
+        <div class="marks" id="marks"></div>
+      </div>
+      <input id="scrubber" type="range" min="0" max="1000" value="0" aria-label="EVA time" />
+    </div>
+    <div class="clock-side">
+      <div><span class="k">Safe return area</span> <span id="area" class="v">-</span></div>
+      <div><span class="k">O2 left</span> <span id="o2-now" class="v">-</span></div>
+      <div><span class="k">Margin here</span> <span id="slack-now" class="v">-</span></div>
+    </div>
+  </section>
+
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <button class="close" id="drawer-close" aria-label="Close">&times;</button>
+    <div id="drawer-body"></div>
+  </aside>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+  <script>window.CESIUM_BASE_URL = "/cesium/";</script>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

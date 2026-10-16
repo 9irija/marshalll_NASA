@@ -1,0 +1,18 @@
+{
+ "bounds": {
+  "west": 77.38999999999999,
+  "south": 18.419995527200545,
+  "east": 77.4619905191787,
+  "north": 18.469999999999995
+ },
+ "layers": {
+  "slope": "slope.png",
+  "hazard": "hazard.png",
+  "science": "science.png",
+  "olivine": "olivine.png",
+  "fe_mg_smectite": "fe_mg_smectite.png",
+  "carbonate": "carbonate.png",
+  "hydration": "hydration.png",
+  "ortho": "ortho.png"
+ }
+}

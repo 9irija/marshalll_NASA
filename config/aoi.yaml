@@ -1,0 +1,62 @@
+# Area of interest, habitat and science targets for Jezero Crater.
+# Coordinates: Mars 2000 IAU sphere (R = 3,396,190 m), planetocentric latitude,
+# longitude east-positive in -180..180.
+
+name: jezero_delta_maaz
+description: >
+  Octavia E. Butler landing site, the Maaz / Seitah crater-floor units and the
+  western delta front. Fully inside HiRISE DTM DTEEC_002387_1985_003798_1985_A01.
+bounds:            # degrees
+  min_lat: 18.420
+  max_lat: 18.470
+  min_lon: 77.390
+  max_lon: 77.462
+working_res_m: 2.0          # resolution of every processed layer and the planner grid
+
+habitat:
+  name: Habitat (Octavia E. Butler site)
+  # Seed point = Perseverance first localization, sol 13 (M20_waypoints.json, RMC 3_0).
+  # preprocess.py moves the habitat to the flattest 2 m cell within search_radius_m
+  # of the seed and writes the final location to data/processed/aoi_resolved.json.
+  seed_lat: 18.44463
+  seed_lon: 77.45089
+  search_radius_m: 250
+
+# Each target sits on a real Perseverance localization (M20_waypoints.json):
+# the end-of-drive position on or before the named sampling / science sol.
+targets:
+  - id: rochette
+    name: Rochette (Maaz)
+    waypoint_sol: 180
+    lat: 18.43074
+    lon: 77.44437
+    science_tags: [igneous, basalt, sample_site]
+    note: Rover parked here for the Montdenier (sol 190) and Montagnac (sol 196) cores.
+  - id: seitah
+    name: Seitah margin (Brac)
+    waypoint_sol: 248
+    lat: 18.43396
+    lon: 77.44302
+    science_tags: [olivine, cumulate, sample_site]
+    note: Olivine-rich Seitah unit; Salette (sol 262) and Coulettes (sol 271) cores.
+  - id: skinner_ridge
+    name: Skinner Ridge (delta front)
+    waypoint_sol: 477
+    lat: 18.45890
+    lon: 77.40617
+    science_tags: [sedimentary, delta, sample_site]
+    note: Delta-front campaign; Skinner Ridge core (sol 495).
+  - id: wildcat_ridge
+    name: Wildcat Ridge (delta front)
+    waypoint_sol: 557
+    lat: 18.45074
+    lon: 77.40144
+    science_tags: [sedimentary, sulfate, organics, hydrated, sample_site]
+    note: Fine-grained mudstone; Wildcat Ridge core (sol 558).
+  - id: three_forks
+    name: Three Forks sample depot
+    waypoint_sol: 652
+    lat: 18.45263
+    lon: 77.40776
+    science_tags: [depot, sample_cache]
+    note: Ten-tube sample depot laid down on sols 586-653.

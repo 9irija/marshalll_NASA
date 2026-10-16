@@ -1,0 +1,9 @@
+.venv
+web
+data/raw/hirise
+data/raw/crism
+data/raw/corpus
+data/processed/cog
+data/processed/web/runtime
+**/__pycache__
+.git

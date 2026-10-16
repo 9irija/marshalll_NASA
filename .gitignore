@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/raw/
+data/processed/cog/
+data/processed/web/runtime/
+data/processed/grid.npz
+web/node_modules/
+web/dist/
+evals/last_run.json
+*.part
+.pytest_cache/
+.ruff_cache/
+screenshot*.png
+data/processed/web/
+data/processed/demo/
