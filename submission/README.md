@@ -9,7 +9,7 @@ Challenge: **Interplanetary Survival Guide: Martian Map**
 
 ---
 
-## Summary (about 170 words)
+## Summary (182 words)
 
 Marswalk Mission Planner is a layered 3D map of Jezero crater, the Perseverance landing site, built for the first
 astronauts who will walk there. It doesn't just display NASA data: it computes on it to answer the crew's real
