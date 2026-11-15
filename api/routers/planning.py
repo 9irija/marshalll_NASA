@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 
 from api import service
 from api.demo import demo_or
@@ -90,3 +90,11 @@ def get_spaceweather():
 @router.get("/pov", summary="Perseverance raw images at each stop (what the crew will see)")
 def get_pov(stop_id: str | None = None):
     return _guard(service.pov, stop_id)
+
+
+@router.get("/mapsheet/{route_id}.png", summary="Printable annotated mission map (PNG) for a planned route")
+def get_mapsheet(route_id: str):
+    from planner import mapsheet
+
+    r = _guard(service.get_route, route_id)
+    return Response(mapsheet.render(get_site(), r), media_type="image/png")

@@ -94,3 +94,6 @@ export const assistant = (messages: { role: "user" | "assistant"; content: strin
   post<AssistantResponse>("/assistant", { messages });
 
 export const checklistUrl = (routeId: string) => `${API}/checklist/${routeId}`;
+
+export const mapsheetUrl = (route: Route, target: string) =>
+  (state.online && !route.id.startsWith("demo") ? `${API}/mapsheet/${route.id}.png` : `${DATA}/demo/mapsheet_${target}_${route.objective}.png`);

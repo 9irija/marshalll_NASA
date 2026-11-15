@@ -120,3 +120,10 @@ def test_new_layers_have_provenance():
     for k in ("geology", "thermal_night", "comms"):
         assert man[k]["url"] and man[k]["processing"]
     assert client.get("/layers/geology/value", params={"lat": 18.445, "lon": 77.45}).json()["value"]["symbol"]
+
+
+@built
+def test_mapsheet_png(walk_route):
+    r = client.get(f"/mapsheet/{walk_route['id']}.png")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png" and r.content[1:4] == b"PNG"
+    assert client.get("/mapsheet/nope.png").status_code == 404

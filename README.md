@@ -31,6 +31,7 @@ when a dust storm hits.
 - **ML: find similar ground.** Pick a science site; a learned embedding of minerals, thermal, brightness and terrain
   finds the most similar reachable ground. Validated against the USGS map it never sees; the planner verifies every
   candidate before any number is shown.
+- **Mission map.** A printable annotated route sheet in the style of NASA's Curiosity route maps.
 - **Helmet HUD.** First-person view along the route with O2, power, next stop, return margin, comms and geology.
 - **What you will see.** Perseverance raw images from the sol the rover stood at each stop.
 
@@ -61,7 +62,7 @@ Set `ANTHROPIC_API_KEY` (and optionally `CLAUDE_MODEL`, default `claude-sonnet-5
 without it the assistant runs in a labelled offline mode. With the API down the web app uses precomputed demo data.
 
 ## Results (this build)
-- 47 tests pass (cost model, CRS round-trips, A* = Dijkstra, envelope monotonicity, viewshed, rover walkback, ML search,
+- 48 tests pass (cost model, CRS round-trips, A* = Dijkstra, envelope monotonicity, viewshed, rover walkback, ML search,
   all API endpoints, verifier). 6/6 route cases pass. Offline evals 7/7 (5 need a live model).
 - Wildcat Ridge on foot: radio line of sight on 14 % of the route, up to 67 min from shelter; by rover 70 min total.
 - ML similar-ground search: 1.7-5.1x more likely than chance to land in the same USGS geologic unit; 1.48x on a

@@ -114,12 +114,12 @@ layers.forEach(([h, d], i) => {
     { x: x + 0.15, y: y + 0.08, w: 2.6, h: 0.66, margin: 0, valign: "top", isTextBox: true, objectName: `Layer text ${h}` });
 });
 shot(s, "crops/envelope_wide.png", 0.6, 3.85, 5.9, 2.75, "Envelope screenshot", "Return envelope closing on the habitat");
-shot(s, "crops/routes_wide.png", 6.85, 3.85, 5.9, 2.75, "Routes crop", "Routes with radio dead zones");
+shot(s, "crops/mapsheet_wide.png", 6.85, 3.85, 5.9, 2.75, "Mission map", "Printable mission map with geology, times, dead zones and point of no return");
 s.addText([{ text: "Return envelope. ", options: { bold: true, color: C.background2 } },
   { text: "Every cell gets a last safe moment; the safe area shrinks as the EVA clock runs.", options: { color: C.accent6 } }],
   { x: 0.6, y: 6.7, w: 5.9, h: 0.6, fontSize: 13, margin: 0, valign: "top", isTextBox: true, objectName: "Envelope caption" });
-s.addText([{ text: "Routes priced in O2 and battery. ", options: { bold: true, color: C.background2 } },
-  { text: "Safest, fastest, most science; purple marks radio dead zones.", options: { color: C.accent6 } }],
+s.addText([{ text: "Printable mission map. ", options: { bold: true, color: C.background2 } },
+  { text: "Curiosity-style route sheet: geology, T+ times, dead zones, point of no return.", options: { color: C.accent6 } }],
   { x: 6.85, y: 6.7, w: 5.9, h: 0.6, fontSize: 13, margin: 0, valign: "top", isTextBox: true, objectName: "Routes caption" });
 
 // 4. Safety --------------------------------------------------------------------------------------
@@ -189,7 +189,7 @@ s.addText("WHY TRUST IT", { placeholder: "kicker" });
 s.addText("Every number traces to NASA data and to code", { placeholder: "title" });
 [["106 m", "mean deviation from Perseverance's real drive between the same points"],
  ["0", "safety numbers from the AI assistant: a verifier checks every figure"],
- ["47", "automated tests, plus route cases and evals; every assumption sourced"],
+ ["48", "automated tests, plus route cases and evals; every assumption sourced"],
  ["~2 s", "to plan three routes on 3 million terrain cells"]].forEach(([n, d], i) => {
   const x = 0.6 + i * 3.07;
   s.addText(n, { x, y: 1.75, w: 2.9, h: 0.8, fontSize: 44, color: C.background2, margin: 0, isTextBox: true, objectName: `Big stat ${i + 1}` });

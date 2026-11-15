@@ -216,6 +216,7 @@ async function boot() {
     renderTotals(r);
     renderSituation(r);
     ($("cuff") as HTMLAnchorElement).href = api.state.online ? api.checklistUrl(r.id) : "#";
+    ($("mapsheet") as HTMLAnchorElement).href = api.mapsheetUrl(r, app.target + (app.mode === "rover" ? "_rover" : ""));
     try {
       app.envelope = await api.getEnvelope(r, app.target + (app.mode === "rover" ? "_rover" : ""));
       env.set(app.envelope.deadline_field.url, app.envelope.deadline_field.bounds, app.envelope.deadline_field.t_max_s);

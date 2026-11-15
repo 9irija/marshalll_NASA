@@ -20,6 +20,7 @@ and what to do when conditions change. Marswalk computes those from NASA data, o
 | Thermal layer | THEMIS night IR: warm at night = rock, cold = dust/sand | `pipeline/context.py` |
 | Rover EVA + walkback | Riding EVA with rover slope limit; the envelope still assumes walking home (Apollo LRV walkback rule) | `planner/routes.py` |
 | ML: find similar ground | Multi-scale 30-dimension embedding (10 measurements at 8, 40 and 120 m) + k-means units; nearest-neighbour search screened for reachability; spatial hold-out validation against the USGS map | `pipeline/ml_train.py`, `planner/ml.py` |
+| Mission map | Printable annotated route sheet in the style of NASA's Curiosity route maps: HiRISE base, USGS units and contacts, T+ ticks every 30 min, stops, dead zones, point of no return, scale bar, title block from the plan | `planner/mapsheet.py` |
 | Helmet HUD | First-person view on the route: heading tape, O2/power, next stop distance and ETA, return margin / PNR countdown, comms, geology | `web/src/hud.ts` |
 | What you will see | Perseverance Navcam / Mastcam-Z / Hazcam raw frames from the sol the rover stood at each stop | `pipeline/pov.py` |
 | Live replanning | Dust storm, suit leak or solar particle alert from the current position and remaining consumables | `api/service.replan` |
@@ -44,7 +45,7 @@ DTM vs 252 rover localizations: +3.1 m mean, 3.5 m std (horizontal registration 
 |---|---|
 | JPL Mars Trek | Streamed base imagery (HiRISE 25 cm, CTX 6 m, Viking) under every layer; Trek search found the product IDs |
 | USGS-NASA Planetary Geologic Mapping Program | SIM 3464 geologic units: map layer, "geology underfoot" per route, HUD, and the independent check of the ML model |
-| Curiosity route-map example | Inspiration for annotated routes with stops; our routes carry named stops, times and leave-by marks |
+| Curiosity route-map example | The printable mission map (`/mapsheet/{route_id}.png`) follows its format: annotated regions (USGS units), the route, numbered stops and times |
 | NASA Worldview | Earth-only (no Mars layers), so not applicable; its role (current conditions) is filled by MEDA weather and DONKI space weather |
 | Perseverance raw images | "What you will see": Navcam / Mastcam-Z / Hazcam frames from the sol the rover stood at each stop, in the panel and the HUD |
 
@@ -82,6 +83,8 @@ Shipped in the USGS package but not used: CTX 20 m DTMs and HRSC (the 1 m HiRISE
    - k-means terrain units: NMI **0.19** (shuffled labels 0.00); **0.16** on the held-out half.
    - Supervised transfer check (gradient boosting, trained on one half, tested on the other): balanced accuracy
      **0.68 vs 0.33 chance** west to east, **0.32 vs 0.20** east to west.
+   We also tested three more features with the same protocol (terrain curvature, image texture, day-night thermal
+   contrast). None improved the similarity lift on the west half, so none was adopted.
    Agreement is partial by design: the map is 1:75,000 with 100-200 m contact offsets, and the two halves are
    different terrains (delta front vs crater floor).
 5. **Replanning uses the same machinery.** Dust (slower, +25 W, more reserve), leak (0.05 kg/h) or a solar particle
@@ -101,7 +104,7 @@ Shipped in the USGS package but not used: CTX 20 m DTMs and HRSC (the 1 m HiRISE
 | ML similar-ground search over 187 k cells | ~1 s |
 
 ## Verification
-- 47 automated tests: cost model, CRS round trip vs PROJ, windowed reads, A* = Dijkstra, envelope monotonicity, PNR,
+- 48 automated tests: cost model, CRS round trip vs PROJ, windowed reads, A* = Dijkstra, envelope monotonicity, PNR,
   viewshed (flat plane, wall shadow, curvature horizon), route context, rover walkback, ML search, SEP shelter
   replan, space-weather parsing, ML validation, every API endpoint, verifier acceptance/rejection (incl. dose).
 - 6 fixed route cases plus the Perseverance comparison: all pass. Offline evals 7/7; 5 need a live model.

@@ -63,6 +63,7 @@ POST /similar  {lat, lon, k?, params?} -> {query, candidates[{lat, lon, similari
                    similarity_map {url, bounds}, model {features, validation}}
 GET  /ml                             -> ML model card (features, scaler, PCA, k-means, validation vs USGS map)
 GET  /spaceweather                   -> {status, mars_cme_impacts[], upcoming_mars_impacts[], sep_events[], flares_m_or_x[], baseline, limits}
+GET  /mapsheet/{route_id}.png        -> annotated mission map PNG (HiRISE base, USGS units, route, T+ ticks, dead zones, PNR)
 GET  /pov?stop_id                    -> Perseverance raw images (camera, sol, utc, mast azimuth, url, credit) per stop
 GET  /conditions?sol                 -> {sol, temp_c: {min, max}, pressure_pa, dust_opacity: null, season, sunrise, sunset, source}
 POST /validate {start?, end? | sol_from?, sol_to?} -> {planned, actual, mean_deviation_m, frechet_m, note, source}
@@ -74,7 +75,7 @@ GET  /health, /assumptions, /manifest, /site
 ```
 Additions to the brief's contract (backwards compatible): `slack_s[]`, `tightest_point`, `deadline_field`,
 `area_km2`, `recommendation`, `mode`, `constraints`, route `context`, rover `mode`, the `solar_particle_event` hazard,
-and the `/similar`, `/ml`, `/spaceweather`, `/pov` endpoints (all additive; no existing field changed).
+and the `/similar`, `/ml`, `/spaceweather`, `/pov`, `/mapsheet` endpoints (all additive; no existing field changed).
 
 ## Envelope rendering choice
 The brief allowed mask tiles or polygons. We ship both: polygons per frame for the API and agent, and one

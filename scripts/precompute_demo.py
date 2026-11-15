@@ -17,6 +17,7 @@ from api import service  # noqa: E402
 from api.demo import key  # noqa: E402
 from api.schemas import EnvelopeRequest, RouteRequest, SimilarRequest, ValidateRequest  # noqa: E402
 from pipeline.geo import PROCESSED, ROOT, load_yaml  # noqa: E402
+from planner import mapsheet  # noqa: E402
 
 OUT = PROCESSED / "demo"
 DEMO_TARGETS = ["wildcat_ridge", "seitah", "rochette", "skinner_ridge", "three_forks"]
@@ -53,6 +54,7 @@ def main() -> int:
                 shutil.copy(src, OUT / f"deadline_{tag}_{r['objective']}.png")
                 env["deadline_field"]["url"] = f"demo/deadline_{tag}_{r['objective']}.png"
                 dump(f"envelope_{tag}_{r['objective']}.json", env)
+                (OUT / f"mapsheet_{tag}_{r['objective']}.png").write_bytes(mapsheet.render(site, service.get_route(r["id"])))
             dump(f"route_{tag}.json", res)
             dump(f"{key('route', req)}.json", res)
             print(f"  {tag}: " + ", ".join(f"{r['objective']} {r['totals']['distance_m']:.0f} m" for r in res["routes"]))

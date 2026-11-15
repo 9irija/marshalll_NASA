@@ -37,6 +37,7 @@ Let the API log "warm-up done" (about 20 s) so every plan returns in 1-2 s.
 - **Find similar ground (ML)** > "Ground like Wildcat Ridge": yellow heat + numbered reachable candidates; the model
   card shows the check against the USGS map. **Plan route** on a candidate: the planner verifies it.
 - **Helmet HUD**: walk the route at eye level with O2, power, next stop, return margin and comms on the visor.
+- **Mission map (PNG)**: the printable Curiosity-style route sheet with geology, T+ ticks, dead zones and the point of no return.
 - Scroll the readout: "What you will see" shows Perseverance's own photos from that stop.
 
 Backup: **Print cuff checklist** opens the Apollo-style wrist card for the selected route.

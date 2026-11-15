@@ -61,7 +61,7 @@ sourced. The same pipeline works for any site with a HiRISE terrain model.
 - **Astronaut safety first.** Reserves, the walkback rule, comms, radiation, shelter time.
 - **Honesty about data.** Nothing is invented. Proxies and gaps are listed, and every layer names its NASA product ID.
 - **AI safety.** The language model is never allowed to produce a safety-critical number.
-- **Validation.** 47 automated tests, fixed route cases, a comparison with the rover's real drive (106 m mean
+- **Validation.** 48 automated tests, fixed route cases, a comparison with the rover's real drive (106 m mean
   deviation), and the ML checked against an independent geologic map.
 - **Usability.** One 3D view, colour-blind-checked palette, a printable Apollo-style cuff checklist, and a mobile
   layout.
