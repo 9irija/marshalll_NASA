@@ -1,19 +1,26 @@
-"""Flight Controller: Claude tool-use loop over the planner, with number verification.
+"""Flight Controller: a tool-use loop over the planner, with number verification.
 
-Model: env CLAUDE_MODEL (default claude-sonnet-5-5). Without ANTHROPIC_API_KEY (or another
-SDK credential) the agent runs in OFFLINE mode: a deterministic parser and a templated
-answer built only from tool results, clearly labelled, so the demo never depends on the key.
+Providers (env LLM_PROVIDER, default "anthropic"):
+  anthropic  Claude via the Anthropic SDK; model env CLAUDE_MODEL (default claude-sonnet-5-5); needs ANTHROPIC_API_KEY.
+  gemini     Google Gemini via the REST API (no extra dependency); model env GEMINI_MODEL (default gemini-2.5-flash);
+             needs GEMINI_API_KEY (free tier available from Google AI Studio).
+Whatever the provider, the same tools run and the same verifier checks every number in the answer.
+Without a key the agent runs in OFFLINE mode: a deterministic parser and a templated answer built
+only from tool results, clearly labelled, so the demo never depends on a key.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import urllib.request
 from pathlib import Path
 
 from flight_controller import tools, verifier
 
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5-5")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 SYSTEM = (Path(__file__).parent / "prompts" / "system.md").read_text(encoding="utf-8")
 MAX_STEPS = 8
 
@@ -61,14 +68,97 @@ def _loop(client, messages: list[dict], ctx: dict, system: str) -> tuple[str, li
     return "I ran out of planning steps; please narrow the request.", calls
 
 
-def ask(history: list[dict]) -> dict:
+# --- Gemini (REST, function calling) -----------------------------------------------------------
+
+def _gemini_schema(schema: dict) -> dict | None:
+    """Anthropic JSON schema -> Gemini OpenAPI subset (no additionalProperties; empty objects omitted)."""
+    def clean(x):
+        if isinstance(x, dict):
+            return {k: clean(v) for k, v in x.items() if k != "additionalProperties"}
+        if isinstance(x, list):
+            return [clean(v) for v in x]
+        return x
+    out = clean(schema)
+    return out if out.get("properties") else None
+
+
+def gemini_tools() -> list[dict]:
+    decls = []
+    for t in tools.TOOLS:
+        d = {"name": t["name"], "description": t["description"]}
+        params = _gemini_schema(t["input_schema"])
+        if params:
+            d["parameters"] = params
+        decls.append(d)
+    return [{"functionDeclarations": decls}]
+
+
+def _gemini_post(body: dict) -> dict:
+    req = urllib.request.Request(GEMINI_URL.format(model=GEMINI_MODEL), data=json.dumps(body).encode("utf-8"), method="POST",
+                                 headers={"content-type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"]})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def _gemini_loop(contents: list[dict], ctx: dict, system: str, post=_gemini_post) -> tuple[str, list]:
+    calls = []
+    for _ in range(MAX_STEPS):
+        resp = post({"systemInstruction": {"parts": [{"text": system}]}, "contents": contents, "tools": gemini_tools()})
+        cands = resp.get("candidates") or []
+        if not cands or "content" not in cands[0]:
+            return "I can't help with that request.", calls
+        content = cands[0]["content"]
+        parts = content.get("parts", [])
+        contents.append({"role": "model", "parts": parts})
+        fcalls = [p["functionCall"] for p in parts if "functionCall" in p]
+        if not fcalls:
+            return "".join(p.get("text", "") for p in parts).strip(), calls
+        responses = []
+        for fc in fcalls:
+            name, args = fc["name"], dict(fc.get("args") or {})
+            try:
+                out = tools.run_tool(name, args, ctx)
+                responses.append({"functionResponse": {"name": name, "response": {"result": json.loads(tools.dumps(out))}}})
+                calls.append({"name": name, "input": args, "output": out})
+            except Exception as e:  # tool errors go back to the model, never swallowed
+                responses.append({"functionResponse": {"name": name, "response": {"error": str(e)}}})
+                calls.append({"name": name, "input": args, "error": str(e)})
+        contents.append({"role": "user", "parts": responses})
+    return "I ran out of planning steps; please narrow the request.", calls
+
+
+def provider() -> str:
+    """Which language model answers: 'gemini', 'anthropic' or 'offline' (no key)."""
+    want = os.getenv("LLM_PROVIDER", "anthropic").lower()
+    if want == "gemini":
+        return "gemini" if os.getenv("GEMINI_API_KEY") else "offline"
+    return "anthropic" if _client() is not None else "offline"
+
+
+def ask(history: list[dict], post=None) -> dict:
     """history: [{role, content}] plain-text chat. Returns the /assistant response shape."""
-    client = _client()
-    if client is None:
+    prov = provider()
+    if prov == "offline":
         return offline_answer(history[-1]["content"])
     ctx: dict = {}
-    messages = [{"role": m["role"], "content": m["content"]} for m in history]
-    answer, calls = _loop(client, messages, ctx, SYSTEM)
+    if prov == "gemini":
+        contents = [{"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]} for m in history]
+
+        def run(fix: str | None = None):
+            if fix:
+                contents.append({"role": "user", "parts": [{"text": fix}]})
+            return _gemini_loop(contents, ctx, SYSTEM, post or _gemini_post)
+        model_name = GEMINI_MODEL
+    else:
+        client = _client()
+        messages = [{"role": m["role"], "content": m["content"]} for m in history]
+
+        def run(fix: str | None = None):
+            if fix:
+                messages.append({"role": "user", "content": fix})
+            return _loop(client, messages, ctx, SYSTEM)
+        model_name = MODEL
+    answer, calls = run()
     check = verifier.check(answer, [[c.get("input"), c.get("output")] for c in calls])
     missing = _missing_citations(answer, ctx)
     if not check["passed"] or missing:
@@ -77,15 +167,14 @@ def ask(history: list[dict]) -> dict:
                + (". It also cites passages that were not retrieved: " + ", ".join(missing) if missing else "")
                + ". Rewrite the answer using only numbers copied from tool results (call tools again if needed) "
                  "and only citations you retrieved.")
-        messages.append({"role": "user", "content": fix})
-        answer2, calls2 = _loop(client, messages, ctx, SYSTEM)
+        answer2, calls2 = run(fix)
         calls += calls2
         check = verifier.check(answer2, [[c.get("input"), c.get("output")] for c in calls])
         answer = answer2
     return {"answer": answer, "citations": ctx.get("citations", []), "tool_calls": calls, "routes": ctx.get("routes", []),
             "verification": {"passed": check["passed"] and not _missing_citations(answer, ctx),
                              "unverified": check["unverified"], "verified_count": len(check["verified"])},
-            "mode": "live", "model": MODEL, "constraints": _constraints_from_calls(calls)}
+            "mode": "live", "provider": prov, "model": model_name, "constraints": _constraints_from_calls(calls)}
 
 
 def _missing_citations(answer: str, ctx: dict) -> list[str]:

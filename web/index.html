@@ -26,6 +26,7 @@
     <button data-drawer="validate" class="tool">Check against Perseverance</button>
     <button data-drawer="sources" class="tool">Data sources</button>
     <button data-drawer="assumptions" class="tool">Model assumptions</button>
+    <button id="help-btn" class="tool icon" aria-label="How to use Marswalk" title="How to use Marswalk">?</button>
     <span id="mode-badge" class="badge" hidden></span>
   </nav>
 
@@ -46,8 +47,8 @@
 
     <fieldset class="hazards">
       <legend class="field-label">Conditions</legend>
-      <label><input type="checkbox" id="hz-dust" /> Dust storm forecast</label>
-      <label><input type="checkbox" id="hz-leak" /> Suit O2 leak</label>
+      <label title="Slower walking, more power for heaters and fans, bigger reserve"><input type="checkbox" id="hz-dust" /> Dust storm forecast</label>
+      <label title="A slow oxygen leak of 0.05 kg per hour"><input type="checkbox" id="hz-leak" /> Suit O2 leak</label>
     </fieldset>
 
     <button id="plan-btn" class="cta">Plan routes</button>
@@ -128,6 +129,34 @@
       <div class="hud-small" id="hud-geo"></div>
     </div>
     <button id="hud-exit" class="ghost hud-exit">Exit HUD (Esc)</button>
+  </div>
+  <div id="legend" class="legend" aria-label="Map key">
+    <button id="legend-toggle" class="legend-head" aria-expanded="true">Map key</button>
+    <ul>
+      <li><i class="sw env"></i>Can still get home from here</li>
+      <li><i class="sw lost"></i>Too far to get home</li>
+      <li><i class="sw ln" style="--c:var(--safest)"></i>Safest route</li>
+      <li><i class="sw ln" style="--c:var(--fastest)"></i>Fastest route</li>
+      <li><i class="sw ln" style="--c:var(--science)"></i>Most science</li>
+      <li><i class="sw dz"></i>No radio contact</li>
+      <li><i class="sw pnr"></i>Point of no return</li>
+    </ul>
+  </div>
+
+  <div id="guide" class="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title" hidden>
+    <div class="guide-card">
+      <button id="guide-close" class="close" aria-label="Close">&times;</button>
+      <div class="eyebrow">Welcome to Jezero crater</div>
+      <h2 id="guide-title">Plan a walk on Mars in four steps</h2>
+      <ol class="steps">
+        <li><span><b>Pick a destination</b> on the left, or click a white pin on the map. Choose walking or the rover.</span></li>
+        <li><span><b>Compare the three routes.</b> Each is priced in oxygen and battery, not just distance.</span></li>
+        <li><span><b>Press play.</b> The teal area is everywhere you can still get home from. Watch it shrink as the EVA clock runs.</span></li>
+        <li><span><b>Test the plan.</b> Inject a dust storm or solar alert, try the <b>Helmet HUD</b>, or let the <b>ML</b> find more ground like your site.</span></li>
+      </ol>
+      <p class="hint">Every number comes from real NASA data and a tested planner. Space bar plays and pauses; Esc closes panels.</p>
+      <button id="guide-start" class="cta">Start exploring</button>
+    </div>
   </div>
   <div id="lightbox" class="lightbox" hidden><img id="lightbox-img" alt="" /><div id="lightbox-cap" class="hint"></div></div>
   <div id="toast" class="toast" role="alert" hidden></div>

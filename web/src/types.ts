@@ -112,8 +112,9 @@ export interface Validation {
 export interface Citation { n: number; title: string; url: string; page: number }
 
 export interface AssistantResponse {
-  answer: string; citations: Citation[]; routes: Route[]; mode: "live" | "offline";
+  answer: string; citations: Citation[]; routes: Route[]; mode: "live" | "offline" | "precomputed";
   verification: { passed: boolean; unverified: { text: string; start: number; end: number }[]; verified_count: number };
+  provider?: string;
   tool_calls: { name: string; input: Record<string, unknown> }[];
   constraints: Record<string, unknown> | null;
 }

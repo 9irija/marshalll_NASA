@@ -104,7 +104,7 @@ Shipped in the USGS package but not used: CTX 20 m DTMs and HRSC (the 1 m HiRISE
 | ML similar-ground search over 187 k cells | ~1 s |
 
 ## Verification
-- 48 automated tests: cost model, CRS round trip vs PROJ, windowed reads, A* = Dijkstra, envelope monotonicity, PNR,
+- 52 automated tests: cost model, CRS round trip vs PROJ, windowed reads, A* = Dijkstra, envelope monotonicity, PNR,
   viewshed (flat plane, wall shadow, curvature horizon), route context, rover walkback, ML search, SEP shelter
   replan, space-weather parsing, ML validation, every API endpoint, verifier acceptance/rejection (incl. dose).
 - 6 fixed route cases plus the Perseverance comparison: all pass. Offline evals 7/7; 5 need a live model.

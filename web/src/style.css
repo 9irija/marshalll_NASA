@@ -231,3 +231,38 @@ body.picking #globe { cursor: crosshair; }
 body.hud-on .panel, body.hud-on .toolbar, body.hud-on .brand { display: none; }
 @media (max-width: 900px) { .hud-left, .hud-right { top: 22%; width: 42vw; } .hud-left { left: 4vw; } .hud-right { right: 4vw; } .hud-dist { font-size: 20px; } }
 @media (prefers-reduced-motion: reduce) { .hud-warn.crit { animation: none; } }
+
+/* --- layer groups, map key, first-visit guide ------------------------------------------------- */
+.layer-group { margin: 12px 0 2px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--butterscotch); }
+.layer-group:first-child { margin-top: 6px; }
+.tool.icon { width: 34px; padding: 7px 0; text-align: center; font-weight: 700; }
+.legend { position: fixed; left: 332px; bottom: 112px; z-index: 4; background: var(--dusk-a); backdrop-filter: blur(12px); border: 1px solid var(--haze);
+  border-radius: 10px; padding: 8px 12px; font-size: 12px; color: var(--frost-2); }
+.legend-head { background: none; border: 0; padding: 0; color: var(--frost); font-weight: 600; font-size: 12px; cursor: pointer; letter-spacing: .04em; }
+.legend-head::after { content: " \25BE"; color: var(--frost-2); }
+.legend.collapsed .legend-head::after { content: " \25B8"; }
+.legend ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.legend.collapsed ul { display: none; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.sw { display: inline-block; width: 18px; height: 10px; border-radius: 2px; flex: none; }
+.sw.env { background: rgba(47,209,166,.55); border: 1px solid var(--envelope); }
+.sw.lost { background: rgba(227,73,72,.35); border: 1px solid var(--critical); }
+.sw.ln { height: 4px; background: var(--c); }
+.sw.dz { height: 6px; background: repeating-linear-gradient(90deg, #aa5ae6 0 5px, transparent 5px 8px); }
+.sw.pnr { width: 10px; height: 10px; border-radius: 50%; background: var(--critical); margin: 0 4px; }
+.guide { position: fixed; inset: 0; z-index: 25; background: rgba(5,10,15,.62); display: grid; place-items: center; padding: 16px; }
+.guide[hidden] { display: none; }
+.guide-card { position: relative; width: min(560px, 100%); background: var(--dusk); border: 1px solid var(--haze); border-radius: var(--r-panel);
+  padding: 26px 28px 24px; box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+.guide-card .close { position: absolute; top: 10px; right: 14px; background: none; border: 0; font-size: 24px; color: var(--frost-2); cursor: pointer; }
+.guide-card .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--butterscotch); }
+.guide-card h2 { font-size: 22px; margin: 6px 0 14px; font-variation-settings: "wdth" 110; }
+.steps { margin: 0 0 12px; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 28px 1fr; gap: 10px; color: var(--frost-2); font-size: 14px; }
+.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--butterscotch); color: var(--butterscotch);
+  display: grid; place-items: center; font-weight: 600; font-size: 13px; }
+.steps b { color: var(--frost); font-weight: 600; }
+.guide-card .cta { margin-top: 8px; }
+.route:hover { border-color: var(--frost-2); }
+.cta:hover:not(:disabled) { filter: brightness(1.08); }
+@media (max-width: 900px) { .legend { display: none; } }

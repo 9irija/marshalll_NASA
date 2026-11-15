@@ -60,11 +60,19 @@ make corpus demo  # Flight Controller corpus; precomputed demo results
 make dev          # API http://localhost:8000 (docs at /docs), web http://localhost:5173
 make test check-route evals
 ```
-Set `ANTHROPIC_API_KEY` (and optionally `CLAUDE_MODEL`, default `claude-sonnet-5-5`) for the live Flight Controller;
-without it the assistant runs in a labelled offline mode. With the API down the web app uses precomputed demo data.
+The Flight Controller works with two language-model providers, and the same planner tools and number verifier
+apply to both:
+- **Claude (default):** set `ANTHROPIC_API_KEY` (optionally `CLAUDE_MODEL`, default `claude-sonnet-5-5`).
+- **Gemini:** set `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` (a free-tier key from Google AI Studio works; optionally
+  `GEMINI_MODEL`, default `gemini-2.5-flash`). No extra package is needed; it calls the Gemini REST API.
+
+Without a key the assistant runs in a labelled offline mode. Keys stay on the server: never put one in the web app,
+because a static site exposes everything it ships. The hosted demo (GitHub Pages) has no server, so its chat answers the
+suggested questions with answers precomputed by the same planner and verifier. With the API down the web app uses
+precomputed demo data.
 
 ## Results (this build)
-- 48 tests pass (cost model, CRS round-trips, A* = Dijkstra, envelope monotonicity, viewshed, rover walkback, ML search,
+- 52 tests pass (cost model, CRS round-trips, A* = Dijkstra, envelope monotonicity, viewshed, rover walkback, ML search,
   all API endpoints, verifier). 6/6 route cases pass. Offline evals 7/7 (5 need a live model).
 - Wildcat Ridge on foot: radio line of sight on 14 % of the route, up to 67 min from shelter; by rover 70 min total.
 - ML similar-ground search: 1.7-5.1x more likely than chance to land in the same USGS geologic unit; 1.48x on a

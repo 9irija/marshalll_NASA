@@ -16,7 +16,15 @@ export class Drawer {
   private chat: { role: "user" | "assistant"; content: string }[] = [];
   private chatHtml = "";
 
+  private suggestions: string[] = [
+    "Plan a 4 hour EVA to the hydrated minerals on the delta.",
+    "Take me to the olivine at Seitah, safest route only.",
+    "Roughly how much oxygen do I need to reach Three Forks and back?",
+    "A dust storm is coming. Can I still make it to Wildcat Ridge in 3 hours?",
+  ];
+
   constructor(private hooks: DrawerHooks) {
+    api.chatSuggestions().then((s) => { if (s.length) this.suggestions = s; }).catch(() => undefined);
     document.getElementById("drawer-close")!.addEventListener("click", () => this.close());
     document.querySelectorAll<HTMLButtonElement>("[data-drawer]").forEach((b) =>
       b.addEventListener("click", () => this.open(b.dataset.drawer!)));
@@ -99,12 +107,7 @@ export class Drawer {
   }
 
   private renderChat() {
-    const suggestions = [
-      "Plan a 4 hour EVA to the hydrated minerals on the delta.",
-      "Take me to the olivine at Seitah, safest route only.",
-      "Roughly how much oxygen do I need to reach Three Forks and back?",
-      "A dust storm is coming. Can I still make it to Wildcat Ridge in 3 hours?",
-    ];
+    const suggestions = this.suggestions;
     this.body.innerHTML = `<h2>Flight Controller</h2>
       <p class="hint">Ask in plain language. Every oxygen, battery, distance and time figure comes from the planner and is checked before you see it.</p>
       <div class="chat-suggest">${suggestions.map((s) => `<button class="ghost suggest">${esc(s)}</button>`).join("")}</div>
@@ -122,8 +125,13 @@ export class Drawer {
       this.chat.push({ role: "user", content: text });
       this.append(`<div class="msg user">${esc(text)}</div><div class="msg bot" id="pending">Planning...</div>`);
       try {
-        if (!api.state.online) throw new Error("The planner API is offline in this demo, so Flight Controller is unavailable. Start it with make dev.");
-        const r = await api.assistant(this.chat);
+        let r: AssistantResponse;
+        if (api.state.online) r = await api.assistant(this.chat);
+        else {
+          const i = suggestions.indexOf(text);
+          if (i < 0) throw new Error("This hosted demo answers the suggested questions above (precomputed by the planner). For any question, run the planner locally with make dev.");
+          r = await api.demoAssistant(i);
+        }
         this.chat.push({ role: "assistant", content: r.answer });
         this.resolvePending(this.renderAnswer(r));
         if (r.routes?.length) this.hooks.showRoutes(r.routes, "Flight Controller plan");
@@ -163,7 +171,9 @@ export class Drawer {
       : `<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e34948"/><path d="M7 3.5 V8 M7 10 V10.2" stroke="#0f1c27" stroke-width="1.8"/></svg> ${v.unverified.length} number(s) could not be verified (highlighted)`;
     const cons = r.constraints ? `<div class="constraints">Understood as: ${esc(Object.entries(r.constraints).filter(([k, x]) => x != null && x !== false && k !== "tool").map(([k, x]) => `${k.replace(/_/g, " ")} ${Array.isArray(x) ? x.join(", ") : x}`).join("; "))}</div>` : "";
     const cites = r.citations.length ? `<div class="sources-list">${r.citations.map((c) => `[${c.n}] <a href="${esc(c.url)}#page=${c.page}" target="_blank" rel="noopener">${esc(c.title)}</a>, p. ${c.page}`).join("<br>")}</div>` : "";
-    const mode = r.mode === "offline" ? `<div class="hint">Offline mode: templated answer from tool results, no language model (set ANTHROPIC_API_KEY for live).</div>` : "";
+    const mode = r.mode === "precomputed"
+      ? `<div class="hint">Precomputed answer: produced by the same planner tools and number verifier, saved for this hosted demo.</div>`
+      : r.mode === "offline" ? `<div class="hint">Offline mode: templated answer from tool results, no language model. For live answers set ANTHROPIC_API_KEY, or LLM_PROVIDER=gemini with GEMINI_API_KEY.</div>` : "";
     return `<div class="msg bot">${cons}${out}<div class="verify">${badge}</div>${cites}${mode}</div>`;
   }
 

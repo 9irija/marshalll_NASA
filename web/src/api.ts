@@ -72,8 +72,10 @@ export const layersMeta = () => json<{ bounds: import("./types").Bounds; ml_boun
   ml_units_legend?: { id: number; colour: number[]; majority_usgs: string; purity: number }[] }>(`${DATA}/layers.json`);
 
 export async function getEnvelope(route: Route, target: string): Promise<Envelope> {
-  if (!state.online || route.id.startsWith("demo")) {
-    const e = await demo<Envelope>(`envelope_${target}_${route.objective}.json`);
+  if (!state.online || route.id.startsWith("demo") || route.id.startsWith("chat")) {
+    // precomputed Flight Controller plans carry their own envelope files (chat<i>-<objective>)
+    const tag = route.id.startsWith("chat") ? route.id.split("-")[0] : target;
+    const e = await demo<Envelope>(`envelope_${tag}_${route.objective}.json`);
     e.deadline_field.url = `${DATA}/${e.deadline_field.url}`;
     return e;
   }
@@ -94,7 +96,12 @@ export const validate = () => (state.online ? post<Validation>("/validate", {}) 
 export const assistant = (messages: { role: "user" | "assistant"; content: string }[]) =>
   post<AssistantResponse>("/assistant", { messages });
 
+/** Hosted demo: precomputed Flight Controller answers to the suggested questions (same planner and verifier). */
+export const chatSuggestions = () => json<string[]>(`${DATA}/chat_suggestions.json`);
+export const demoAssistant = (i: number) => demo<AssistantResponse>(`assistant_${i}.json`);
+
 export const checklistUrl = (routeId: string) => `${API}/checklist/${routeId}`;
 
 export const mapsheetUrl = (route: Route, target: string) =>
-  (state.online && !route.id.startsWith("demo") ? `${API}/mapsheet/${route.id}.png` : `${DATA}/demo/mapsheet_${target}_${route.objective}.png`);
+  (state.online && !route.id.startsWith("demo") && !route.id.startsWith("chat") ? `${API}/mapsheet/${route.id}.png`
+    : `${DATA}/demo/mapsheet_${route.id.startsWith("chat") ? route.id.split("-")[0] : target}_${route.objective}.png`);

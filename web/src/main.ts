@@ -14,18 +14,19 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const OVERLAYS: { id: string; name: string; alpha: number }[] = [
-  { id: "science", name: "Science value (CRISM)", alpha: 0.85 },
-  { id: "geology", name: "Geologic units (USGS)", alpha: 0.65 },
-  { id: "thermal_night", name: "Night thermal (THEMIS)", alpha: 0.6 },
-  { id: "comms", name: "Comms dead zones", alpha: 0.75 },
-  { id: "ml_units", name: "ML terrain units", alpha: 0.7 },
-  { id: "slope", name: "Slope", alpha: 0.75 },
-  { id: "hazard", name: "Rock hazard (proxy)", alpha: 0.75 },
-  { id: "olivine", name: "Olivine", alpha: 0.85 },
-  { id: "fe_mg_smectite", name: "Fe/Mg smectite", alpha: 0.85 },
-  { id: "carbonate", name: "Carbonate", alpha: 0.9 },
-  { id: "hydration", name: "Hydration", alpha: 0.85 },
+type Group = "Safety" | "Science" | "Geology" | "Machine learning";
+const OVERLAYS: { id: string; name: string; alpha: number; group: Group; hint: string }[] = [
+  { id: "comms", name: "Radio dead zones", alpha: 0.75, group: "Safety", hint: "Purple: no direct radio line of sight to the habitat mast" },
+  { id: "slope", name: "Slope", alpha: 0.75, group: "Safety", hint: "Green is easy walking; red is steeper than the 25 degree limit" },
+  { id: "hazard", name: "Rock hazard (proxy)", alpha: 0.75, group: "Safety", hint: "Rough, rocky ground from terrain roughness and image texture" },
+  { id: "science", name: "Science value (CRISM)", alpha: 0.85, group: "Science", hint: "Where the orbital spectrometer sees the most interesting minerals" },
+  { id: "olivine", name: "Olivine", alpha: 0.85, group: "Science", hint: "Volcanic mineral, common on the crater floor" },
+  { id: "fe_mg_smectite", name: "Fe/Mg smectite (clay)", alpha: 0.85, group: "Science", hint: "Clay formed in water" },
+  { id: "carbonate", name: "Carbonate", alpha: 0.9, group: "Science", hint: "Can preserve signs of past life" },
+  { id: "hydration", name: "Hydration", alpha: 0.85, group: "Science", hint: "Minerals that hold water" },
+  { id: "geology", name: "Geologic units (USGS)", alpha: 0.65, group: "Geology", hint: "Expert geologic map of Jezero, USGS SIM 3464" },
+  { id: "thermal_night", name: "Night thermal (THEMIS)", alpha: 0.6, group: "Geology", hint: "Warm at night means solid rock; cold means dust and sand" },
+  { id: "ml_units", name: "ML terrain units", alpha: 0.7, group: "Machine learning", hint: "Ground the model groups as similar" },
 ];
 
 const app = {
@@ -51,6 +52,21 @@ function toast(msg: string, ms = 5000) {
 }
 
 async function boot() {
+  // --- first-visit guide and map key ----------------------------------------------------------
+  const guide = $("guide");
+  const seen = () => { try { return localStorage.getItem("mw-guide-seen") === "1"; } catch { return false; } };
+  const closeGuide = () => { guide.hidden = true; try { localStorage.setItem("mw-guide-seen", "1"); } catch { /* storage blocked */ } };
+  $("guide-close").addEventListener("click", closeGuide);
+  $("guide-start").addEventListener("click", closeGuide);
+  $("help-btn").addEventListener("click", () => (guide.hidden = !guide.hidden));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !guide.hidden) closeGuide(); });
+  if (!seen()) guide.hidden = false;
+  $("legend-toggle").addEventListener("click", () => {
+    const l = $("legend");
+    l.classList.toggle("collapsed");
+    $("legend-toggle").setAttribute("aria-expanded", String(!l.classList.contains("collapsed")));
+  });
+
   await api.probe();
   const badge = $("mode-badge");
   if (!api.state.online) {
@@ -105,14 +121,20 @@ async function boot() {
   }
   const geoLegend = (meta.geology_legend ?? []).filter((u) => u.aoi_fraction > 0.001)
     .map((u) => `<span><i style="background:rgb(${u.colour.join(",")})"></i>${esc(u.name.replace(/ unit$/, ""))}</span>`).join("");
-  layerList.innerHTML = [
-    `<div class="layer-row"><input type="checkbox" id="ly-hirise" checked><label for="ly-hirise">HiRISE 25 cm imagery</label><span></span></div>`,
-    `<div class="layer-row"><input type="checkbox" id="ly-traverse"><label for="ly-traverse">Perseverance traverse</label><span></span></div>`,
-    `<div class="layer-row"><input type="checkbox" id="ly-envelope" checked><label for="ly-envelope">Return envelope</label><span></span></div>`,
-    ...OVERLAYS.filter((o) => handles.has(o.id)).map((o) => `<div class="layer-row"><input type="checkbox" id="ly-${o.id}"><label for="ly-${o.id}">${o.name}</label>
+  const row = (o: (typeof OVERLAYS)[number]) => `<div class="layer-row" title="${esc(o.hint)}"><input type="checkbox" id="ly-${o.id}"><label for="ly-${o.id}">${o.name}</label>
       <input type="range" min="0" max="1" step="0.05" value="${o.alpha}" id="op-${o.id}" aria-label="${o.name} opacity"></div>`
-      + (o.id === "geology" ? `<div class="geo-legend" id="geo-legend" hidden>${geoLegend}</div>` : "")),
-    `<div class="layer-row"><input type="checkbox" id="ly-exag" checked><label for="ly-exag">Vertical exaggeration 1.5x</label><span></span></div>`,
+      + (o.id === "geology" ? `<div class="geo-legend" id="geo-legend" hidden>${geoLegend}</div>` : "");
+  const groups: Group[] = ["Safety", "Science", "Geology", "Machine learning"];
+  layerList.innerHTML = [
+    `<div class="layer-group">Base map</div>`,
+    `<div class="layer-row" title="NASA Mars Trek HiRISE mosaic, 25 cm per pixel"><input type="checkbox" id="ly-hirise" checked><label for="ly-hirise">HiRISE 25 cm imagery</label><span></span></div>`,
+    `<div class="layer-row" title="Teal: where the crew can still get home from at the current EVA time"><input type="checkbox" id="ly-envelope" checked><label for="ly-envelope">Return envelope</label><span></span></div>`,
+    `<div class="layer-row" title="The real drive of the Perseverance rover"><input type="checkbox" id="ly-traverse"><label for="ly-traverse">Perseverance traverse</label><span></span></div>`,
+    `<div class="layer-row" title="Exaggerate heights so slopes are easier to see"><input type="checkbox" id="ly-exag" checked><label for="ly-exag">Exaggerate terrain 1.5x</label><span></span></div>`,
+    ...groups.flatMap((g) => {
+      const items = OVERLAYS.filter((o) => o.group === g && handles.has(o.id));
+      return items.length ? [`<div class="layer-group">${g}</div>`, ...items.map(row)] : [];
+    }),
   ].join("");
   $<HTMLInputElement>("ly-hirise").addEventListener("change", (e) => (base.hirise.show = (e.target as HTMLInputElement).checked));
   $<HTMLInputElement>("ly-traverse").addEventListener("change", (e) => scene.showTraverse((e.target as HTMLInputElement).checked));

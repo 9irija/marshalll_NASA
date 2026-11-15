@@ -21,6 +21,12 @@ from planner import mapsheet  # noqa: E402
 
 OUT = PROCESSED / "demo"
 DEMO_TARGETS = ["wildcat_ridge", "seitah", "rochette", "skinner_ridge", "three_forks"]
+CHAT_SUGGESTIONS = [
+    "Plan a 4 hour EVA to the hydrated minerals on the delta.",
+    "Take me to the olivine at Seitah, safest route only.",
+    "Roughly how much oxygen do I need to reach Three Forks and back?",
+    "A dust storm is coming. Can I still make it to Wildcat Ridge in 3 hours?",
+]
 
 
 def dump(name: str, obj) -> None:
@@ -66,6 +72,24 @@ def main() -> int:
         dump(f"similar_{tid}.json", sim)
     v = service.validate_route(None, None, None, None)
     dump("validate.json", v)
+    # Flight Controller answers to the suggested questions, for hosted demos with no planner API
+    from flight_controller import agent
+
+    questions = CHAT_SUGGESTIONS
+    (PROCESSED / "web" / "chat_suggestions.json").write_text(json.dumps(questions, indent=1), encoding="utf-8")
+    for i, q in enumerate(questions):
+        a = agent.offline_answer(q)
+        a["mode"] = "precomputed"
+        for r in a["routes"]:
+            tag = f"chat{i}"
+            env = service.envelope_for(EnvelopeRequest(route_id=r["id"], timestep_s=300, polygons=False))
+            shutil.copy(PROCESSED / "web" / "runtime" / f"deadline_{r['id']}.png", OUT / f"deadline_{tag}_{r['objective']}.png")
+            env["deadline_field"]["url"] = f"demo/deadline_{tag}_{r['objective']}.png"
+            dump(f"envelope_{tag}_{r['objective']}.json", env)
+            (OUT / f"mapsheet_{tag}_{r['objective']}.png").write_bytes(mapsheet.render(site, service.get_route(r["id"])))
+            r["id"] = f"{tag}-{r['objective']}"
+        dump(f"assistant_{i}.json", a)
+        print(f"  assistant {i}: verified {a['verification']['passed']} ({a['verification']['verified_count']} numbers)")
     dump(f"{key('validate', ValidateRequest())}.json", v)
     print(f"  validate: mean dev {v['mean_deviation_m']} m, frechet {v['frechet_m']} m")
     return 0
