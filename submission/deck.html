@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marswalk Mission Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..700&display=swap" rel="stylesheet">
+<style>
+  @page { size: 1600px 900px; margin: 0; }
+  :root { --dusk:#0f1c27; --raised:#13212e; --haze:#2b4053; --frost:#e9eef2; --frost2:#a9b8c5; --sc:#d9a066; --env:#2fd1a6; --crit:#e34948; --ml:#9085e9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--dusk); color: var(--frost); font-family: Archivo, system-ui, sans-serif; }
+  .slide { width: 1600px; height: 900px; position: relative; overflow: hidden; page-break-after: always; padding: 72px 84px; display: grid; }
+  .slide:last-child { page-break-after: auto; }
+  h1 { font-size: 92px; line-height: 1; margin: 0; font-weight: 600; font-variation-settings: "wdth" 125; letter-spacing: -.01em; }
+  h2 { font-size: 50px; line-height: 1.08; margin: 0 0 26px; font-weight: 600; font-variation-settings: "wdth" 115; }
+  .kicker { color: var(--sc); font-size: 20px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 18px; }
+  p, li { font-size: 25px; line-height: 1.42; color: var(--frost2); }
+  li { margin: 0 0 12px; } ul { padding-left: 26px; margin: 0; }
+  b, strong { color: var(--frost); font-weight: 600; }
+  .two { grid-template-columns: 560px 1fr; gap: 56px; align-items: center; }
+  .shot { width: 100%; border-radius: 14px; border: 1px solid var(--haze); box-shadow: 0 20px 60px rgba(0,0,0,.5); display: block; }
+  .num { font-size: 64px; font-weight: 300; color: var(--frost); font-variation-settings: "wdth" 120; line-height: 1; }
+  .stat { border-top: 2px solid var(--haze); padding-top: 14px; }
+  .stat p { font-size: 20px; margin: 8px 0 0; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 34px; margin-top: 34px; }
+  .tag { display: inline-block; font-size: 15px; letter-spacing: .08em; padding: 3px 10px; border-radius: 6px; background: rgba(144,133,233,.25); color: #c8c1ff; vertical-align: middle; }
+  .foot { position: absolute; left: 84px; bottom: 22px; font-size: 16px; color: var(--frost2); opacity: .8; }
+  .title { background: linear-gradient(90deg, rgba(15,28,39,1) 0%, rgba(15,28,39,.97) 52%, rgba(15,28,39,.2) 78%), url(img/envelope.png) center/cover; align-content: center; }
+  .strip { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 30px; }
+  .strip img { width: 100%; height: 300px; object-fit: cover; object-position: center; border-radius: 12px; border: 1px solid var(--haze); }
+  .strip figcaption { font-size: 17px; color: var(--frost2); margin-top: 8px; }
+  figure { margin: 0; }
+  .title p { max-width: 760px; font-size: 30px; }
+  .q { color: var(--sc); font-size: 40px; font-weight: 500; margin: 26px 0 30px; max-width: 900px; line-height: 1.2; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 36px; }
+  .card { background: var(--raised); border: 1px solid var(--haze); border-radius: 14px; padding: 22px 26px; }
+  .card h3 { margin: 0 0 8px; font-size: 26px; color: var(--frost); font-weight: 600; }
+  .card p { margin: 0; font-size: 21px; }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; vertical-align: 2px; }
+  .layers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 30px; }
+  .layer { border-left: 3px solid var(--sc); padding: 4px 0 4px 14px; font-size: 19px; color: var(--frost2); }
+  .layer b { display: block; font-size: 21px; }
+</style>
+</head>
+<body>
+
+<!-- 1. Title -->
+<section class="slide title">
+  <div>
+    <div class="kicker">NASA Space Apps 2026 · Interplanetary Survival Guide: Martian Map</div>
+    <h1>Marswalk<br>Mission Planner</h1>
+    <div class="q">Can I get there, do the science, and get home alive?</div>
+    <p>A layered 3D map of Jezero crater that computes on eight NASA and USGS datasets to plan a suited Marswalk: routes costed in oxygen and battery, a shrinking return envelope, live hazards, a helmet HUD and ML-guided science.</p>
+  </div>
+</section>
+
+<!-- 2. Problem -->
+<section class="slide two">
+  <div>
+    <div class="kicker">The problem</div>
+    <h2>Mars maps are built for regions. Astronauts walk metres.</h2>
+    <ul>
+      <li>Mars Trek and USGS maps show <b>where things are</b>, not whether a suited crew member can <b>reach them and return</b>.</li>
+      <li>The real limit is life support: <b>kilograms of O2 and watt-hours</b>, not kilometres.</li>
+      <li>Safety also depends on what a map hides: <b>radio shadow, solar storms, distance to shelter</b>.</li>
+      <li>We plan at <b>2 m resolution</b> on the Perseverance landing site, where rover data lets us check our answers.</li>
+    </ul>
+  </div>
+  <img class="shot" src="img/routes.png" alt="Three routes from the habitat to Wildcat Ridge on HiRISE terrain">
+  <div class="foot">Jezero crater: Octavia E. Butler landing site to the western delta. HiRISE DTM + 25 cm imagery.</div>
+</section>
+
+<!-- 3. Layers + core planner -->
+<section class="slide">
+  <div>
+    <div class="kicker">How it works</div>
+    <h2>Eight data layers in, one safety decision out</h2>
+    <div class="layers">
+      <div class="layer"><b>Topographic</b>HiRISE DTM 1 m: slope, roughness</div>
+      <div class="layer"><b>Optical</b>HiRISE 25 cm, CTX; Perseverance photos</div>
+      <div class="layer"><b>Spectral</b>CRISM: olivine, clays, carbonate, hydration</div>
+      <div class="layer"><b>Thermal</b>THEMIS night IR: rock vs dust</div>
+      <div class="layer"><b>Geologic</b>USGS SIM 3464 map units</div>
+      <div class="layer"><b>Atmospheric</b>MEDA weather at Jezero</div>
+      <div class="layer"><b>Radiation</b>MSL RAD dose, NASA DONKI space weather</div>
+      <div class="layer"><b>Ground truth</b>706 Perseverance positions</div>
+    </div>
+    <div class="grid4" style="margin-top:36px">
+      <div class="card"><h3>Routes priced in O2 and battery</h3><p>Every 2 m step is costed with a published walking-energy model on the real slope. Safest, fastest and most-science routes.</p></div>
+      <div class="card"><h3>Return envelope + point of no return</h3><p>Every cell gets a "last safe moment". The safe area shrinks on the map as the EVA clock runs; the point of no return is pinned on the route.</p></div>
+    </div>
+    <div class="strip">
+      <figure><img src="img/envelope.png" alt="Return envelope closing on the habitat"><figcaption>Teal: everywhere the crew can still get home from, closing on the habitat late in a 4 h EVA.</figcaption></figure>
+      <figure><img src="img/routes.png" alt="Three Pareto routes" style="object-position: 40% 70%"><figcaption>Safest, fastest and most-science routes; purple hatching marks radio dead zones.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Safety beyond the map -->
+<section class="slide two">
+  <div>
+    <div class="kicker">Safety the map does not show</div>
+    <h2>It finds the risks before the crew steps out</h2>
+    <ul>
+      <li><span class="dot" style="background:#aa5ae6"></span><b>Comms dead zones:</b> radio line of sight to the habitat on only <b>14 %</b> of the Wildcat Ridge walk.</li>
+      <li><span class="dot" style="background:var(--crit)"></span><b>Solar storms:</b> up to <b>67 min</b> from shelter against a 30 min rule. One click replans: "shelter now".</li>
+      <li><span class="dot" style="background:var(--env)"></span><b>Rover + walkback:</b> the same trip in <b>70 min</b>, with the envelope still assuming a walk home if the rover fails.</li>
+      <li><span class="dot" style="background:var(--sc)"></span><b>Live replanning</b> for a dust storm or suit leak from the current position.</li>
+    </ul>
+  </div>
+  <div style="display:flex; gap:28px; align-items:center; justify-content:center">
+    <img class="shot" src="img/situation.png" alt="On this route: comms, shelter time, dose, geology" style="height:740px; width:auto; object-fit:cover; object-position:top">
+    <img class="shot" src="img/routes.png" alt="Route with purple radio dead zones" style="height:740px; width:420px; object-fit:cover; object-position:50% 70%">
+  </div>
+</section>
+
+<!-- 5. ML -->
+<section class="slide two" style="grid-template-columns: 520px 1fr">
+  <div>
+    <div class="kicker">Machine learning <span class="tag">ML</span></div>
+    <h2>Find more ground like the best science site</h2>
+    <ul>
+      <li>10 features per 8 m cell: <b>minerals, temperature, brightness, terrain</b>.</li>
+      <li>Pick a spot (e.g. Wildcat Ridge, organics-bearing mudstone): it returns the most similar ground the crew can <b>reach</b>.</li>
+      <li>Checked against the USGS map it never saw: <b>1.7x to 3.9x</b> better than chance.</li>
+      <li><b>ML proposes, physics decides:</b> each candidate is costed by the planner before any number is shown.</li>
+    </ul>
+  </div>
+  <img class="shot" src="img/similar.png" alt="Similar-ground search with candidates and model card">
+</section>
+
+<!-- 6. HUD -->
+<section class="slide two" style="grid-template-columns: 1fr 470px">
+  <img class="shot" src="img/hud.png" alt="Helmet heads-up display along the route">
+  <div>
+    <div class="kicker">In the field</div>
+    <h2>A helmet HUD for the walk itself</h2>
+    <ul>
+      <li>First-person view on the planned route: <b>heading, O2, power, next stop, ETA</b>.</li>
+      <li><b>Return margin</b> and a point-of-no-return countdown that turns red when it is time to turn back.</li>
+      <li>Comms status and the <b>geologic unit underfoot</b>.</li>
+      <li>"What you will see": <b>Perseverance's own photos</b> from each stop.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 7. Trust + impact -->
+<section class="slide">
+  <div>
+    <div class="kicker">Why trust it</div>
+    <h2>Every number traces to NASA data and to code</h2>
+    <div class="stats">
+      <div class="stat"><div class="num">106 m</div><p>mean deviation from Perseverance's real drive between the same two points</p></div>
+      <div class="stat"><div class="num">0</div><p>safety numbers from the AI assistant: a verifier checks every figure against the planner's output</p></div>
+      <div class="stat"><div class="num">47</div><p>automated tests, plus 6 route cases and evals; every assumption has a cited source</p></div>
+      <div class="stat"><div class="num">~2 s</div><p>to plan three routes on 3 million terrain cells</p></div>
+    </div>
+    <div class="strip" style="margin-top:28px">
+      <figure><img src="img/validation.png" alt="Planned walker route vs Perseverance drive" style="height:220px"><figcaption>Dashed white: Perseverance's real drive. Gold: our plan for a walker between the same points.</figcaption></figure>
+      <figure><img src="img/flight-controller.png" alt="Flight Controller answer with verified numbers" style="height:220px; object-position: right top"><figcaption>Flight Controller: plain-language planning, every number checked against tool output, documents cited.</figcaption></figure>
+    </div>
+    <p style="margin-top:22px; max-width:1400px"><b>Impact:</b> mission planners and crews get a decision, not just a picture: go, go by rover, or don't go, with the reason. The same pipeline runs on any site with a HiRISE DTM.</p>
+    <p style="max-width:1300px"><b>Built with</b> Python (GDAL, numba, scikit-learn, FastAPI), TypeScript + CesiumJS, and Claude with tool use.</p>
+  </div>
+  <div class="foot">github.com/9irija/marshalll_NASA · Data: NASA PDS, Mars Trek, MMGIS, CCMC DONKI, USGS. Images: NASA/JPL-Caltech/UArizona.</div>
+</section>
+
+</body>
+</html>
