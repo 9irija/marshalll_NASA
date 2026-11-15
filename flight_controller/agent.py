@@ -150,10 +150,20 @@ def offline_answer(text: str) -> dict:
             p = r["point_of_no_return"]
             line += f" Point of no return at T+{p['t_min']} minutes."
         lines.append(line)
-    if docs["passages"]:
-        top = docs["passages"][0]
-        snippet = re.sub(r"\s+", " ", top["text"])[:220].rsplit(" ", 1)[0]
-        lines.append(f"Relevant guidance [{top['n']}]: \"{snippet}...\" ({top['title']}, p. {top['page']})")
+    first = plan["routes"][0] if plan["routes"] else {}
+    if first.get("comms"):
+        cm, rad = first["comms"], first["radiation"]
+        lines.append(f"On {first['label']}: radio line of sight to the habitat on {cm['line_of_sight_pct']}% of the route, "
+                     f"longest dead zone {cm['longest_dead_zone_min']} minutes; worst-case time to shelter "
+                     f"{rad['max_time_to_shelter_min']} minutes against a {rad['sep_warning_min']} minutes solar particle rule"
+                     f" ({'OK' if rad['sep_shelter_ok'] else 'NOT met'}).")
+    # Quote one prose sentence (no figures) from the best passage: document numbers out of context are not shown.
+    for p in docs["passages"]:
+        sents = re.split(r"(?<=[.!?])\s+", re.sub(r"\s+", " ", p["text"]))
+        good = [s for s in sents if len(s.split()) >= 8 and not re.search(r"\d", s) and len(s) <= 260]
+        if good:
+            lines.append(f"Relevant guidance [{p['n']}]: \"{good[0]}\" ({p['title']}, p. {p['page']})")
+            break
     answer = "\n".join(lines)
     check = verifier.check(answer, [[x["input"], x["output"]] for x in calls])
     return {"answer": answer, "citations": ctx.get("citations", []), "tool_calls": calls, "routes": ctx.get("routes", []),

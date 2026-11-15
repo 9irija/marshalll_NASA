@@ -31,4 +31,12 @@ Let the API log "warm-up done" (about 20 s) so every plan returns in 1-2 s.
 - Close: "Every layer traces to a NASA product, every number traces to a tool call, and the plan holds up
   against where Perseverance actually drove."
 
+## 5. New: comms, radiation, ML and the helmet view (60 s)
+- Readout "On this route": radio line of sight on 14 % of the Wildcat walk (purple stretches), 67 min from shelter
+  against the 30 min solar particle rule. Switch Travel to **Rover + walkback**: 70 min trip, envelope still assumes a walk home.
+- **Find similar ground (ML)** > "Ground like Wildcat Ridge": yellow heat + numbered reachable candidates; the model
+  card shows the check against the USGS map. **Plan route** on a candidate: the planner verifies it.
+- **Helmet HUD**: walk the route at eye level with O2, power, next stop, return margin and comms on the visor.
+- Scroll the readout: "What you will see" shows Perseverance's own photos from that stop.
+
 Backup: **Print cuff checklist** opens the Apollo-style wrist card for the selected route.

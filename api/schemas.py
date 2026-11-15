@@ -6,7 +6,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 Objective = Literal["safest", "fastest", "science"]
-Hazard = Literal["dust_storm", "suit_fault"]
+Hazard = Literal["dust_storm", "suit_fault", "solar_particle_event"]
+Mode = Literal["walk", "rover"]
 
 
 class LatLon(BaseModel):
@@ -26,6 +27,7 @@ class RouteRequest(BaseModel):
     round_trip: bool = True
     hazard: Hazard | None = None
     params: dict[str, float] | None = Field(None, description="Overrides of CostParams fields, e.g. max_duration_s")
+    mode: Mode = Field("walk", description="walk, or rover (riding EVA, return envelope still costed for walking home)")
 
 
 class EnvelopeRequest(BaseModel):
@@ -70,3 +72,8 @@ class Message(BaseModel):
 class AssistantRequest(BaseModel):
     messages: list[Message]
     confirm_constraints: bool = Field(True, description="If false, only parse constraints and return them for review")
+
+
+class SimilarRequest(LatLon):
+    k: int = Field(6, ge=1, le=20, description="Number of candidate sites")
+    params: dict[str, float] | None = Field(None, description="CostParams overrides (max_duration_s screens reachability)")

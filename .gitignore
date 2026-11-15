@@ -15,3 +15,6 @@ evals/last_run.json
 screenshot*.png
 data/processed/web/
 data/processed/demo/
+data/processed/context.npz
+data/processed/ml.npz
+.playwright-mcp/

@@ -14,10 +14,11 @@ from dataclasses import replace
 
 import numpy as np
 
-from api.schemas import EnvelopeRequest, LatLon, ReplanRequest, RouteRequest
+from api import spaceweather
+from api.schemas import EnvelopeRequest, LatLon, ReplanRequest, RouteRequest, SimilarRequest
 from pipeline.geo import PROCESSED, RAW, ROOT, load_yaml
 from pipeline.layers.render import write_png
-from planner import envelope, routes, science, validate
+from planner import awareness, envelope, ml, routes, science, validate
 from planner.cost import CostParams
 from planner.routes import Route, Stop
 from planner.site import Site, get_site
@@ -75,12 +76,19 @@ def plan(req: RouteRequest) -> dict:
         end.kind = "target"
     objectives = ("safest", "fastest", "science") if req.objective == "all" else (req.objective,)
     t0 = time.perf_counter()
-    rs = science.plan_pareto(site, p, start, stops, end, objectives)
+    try:
+        rs = science.plan_pareto(site, p, start, stops, end, objectives, mode=req.mode)
+    except ValueError as e:
+        if req.mode == "rover" and "no passable route" in str(e):
+            lim = routes.rover_config()["max_slope_deg"]
+            raise ValueError(f"The rover cannot reach this destination within its {lim} deg slope limit. "
+                             "Plan it as a walking EVA, or pick a nearby stop on gentler ground.") from e
+        raise
     out = []
     for r in rs:
         _remember(r)
         out.append(routes.to_geojson(site, r))
-    return {"routes": out, "assumptions_version": p.version, "hazard": req.hazard, "params": p.overrides,
+    return {"routes": out, "assumptions_version": p.version, "hazard": req.hazard, "params": p.overrides, "mode": req.mode,
             "compute_ms": round((time.perf_counter() - t0) * 1000, 1)}
 
 
@@ -124,7 +132,7 @@ def replan(req: ReplanRequest) -> dict:
     abort = _offset(routes.build_route(site, p, "safest", [here, home], o2, batt), req.t_s, site, p, o2, batt)
     abort.objective = "abort"
     out.append(abort)
-    if req.targets:
+    if req.targets and req.hazard != "solar_particle_event":    # SEP: shelter now, no continue option
         stops = [_stop(site, t, p) for t in req.targets]
         try:
             for r in science.plan_pareto(site, p, here, stops, home, (req.objective,), o2, batt):
@@ -138,8 +146,14 @@ def replan(req: ReplanRequest) -> dict:
         if r.objective == "abort":
             g["label"] = "Abort: return to habitat"
         res.append(g)
-    return {"routes": res, "assumptions_version": p.version, "hazard": req.hazard,
-            "recommendation": "abort" if (len(out) == 1 or not out[1].totals["feasible"]) else req.objective}
+    rec = "abort" if (len(out) == 1 or not out[1].totals["feasible"]) else req.objective
+    out_ = {"routes": res, "assumptions_version": p.version, "hazard": req.hazard, "recommendation": rec}
+    if req.hazard == "solar_particle_event":
+        warn = load_yaml("model.yaml")["radiation"]["sep_shelter_warning_min"]["value"] * 60
+        t_home = out[0].totals["duration_s"] - req.t_s
+        out_["recommendation"] = "shelter"
+        out_["shelter"] = {"time_to_habitat_s": round(t_home, 1), "warning_s": warn, "within_warning": bool(t_home <= warn)}
+    return out_
 
 
 def _offset(r: Route, t0: float, site: Site, p: CostParams, o2: float, batt: float) -> Route:
@@ -205,11 +219,15 @@ def validate_route(sol_from: int | None, sol_to: int | None, start: LatLon | Non
 def layers() -> list[dict]:
     meta = json.loads((PROCESSED / "web" / "layers.json").read_text())
     manifest = {m["id"]: m for m in json.loads((ROOT / "data" / "manifest.json").read_text())["layers"]}
-    units = {"slope": "deg", "hazard": "0-1", "science": "0-1"}
+    units = {"slope": "deg", "hazard": "0-1", "science": "0-1", "geology": "unit", "thermal_night": "DN", "comms": "0/1",
+             "ml_units": "class"}
     names = {"slope": "Slope", "hazard": "Rock hazard (proxy)", "science": "Science value", "olivine": "Olivine (CRISM)",
              "fe_mg_smectite": "Fe/Mg smectite (CRISM)", "carbonate": "Carbonate (CRISM)", "hydration": "Hydration (CRISM)",
-             "ortho": "HiRISE orthoimage (local)"}
-    out = [{"id": k, "name": names.get(k, k), "type": "overlay", "tile_url": f"/static/web/{f}", "bounds": meta["bounds"],
+             "ortho": "HiRISE orthoimage (local)", "geology": "Geologic units (USGS SIM 3464)",
+             "thermal_night": "THEMIS night IR (thermal)", "comms": "Comms dead zones (no line of sight)",
+             "ml_units": "ML terrain units"}
+    out = [{"id": k, "name": names.get(k, k), "type": "overlay", "tile_url": f"/static/web/{f}",
+            "bounds": meta.get("ml_bounds", meta["bounds"]) if k == "ml_units" else meta["bounds"],
             "units": units.get(k, manifest.get(k, {}).get("units", "0-1")), "provenance_id": k}
            for k, f in meta["layers"].items()]
     trek = "https://trek.nasa.gov/tiles/Mars/EQ/{label}/1.0.0//default/default028mm/{{TileMatrix}}/{{TileRow}}/{{TileCol}}.{ext}"
@@ -224,6 +242,30 @@ def layers() -> list[dict]:
     return out
 
 
+def similar(req: SimilarRequest) -> dict:
+    if not ml.available():
+        raise ValueError("ML model not built; run python -m pipeline.ml_train")
+    p = CostParams.from_config(req.params)
+    return ml.similar(get_site(), req.lat, req.lon, p, req.k)
+
+
+def space_weather() -> dict:
+    return spaceweather.space_weather(demo=DEMO_MODE)
+
+
+def pov(stop_id: str | None = None) -> dict:
+    d = json.loads((PROCESSED / "web" / "pov.json").read_text(encoding="utf-8"))
+    if stop_id is None:
+        return d
+    if stop_id not in d["stops"]:
+        raise KeyError(f"no images for {stop_id!r}; known: {list(d['stops'])}")
+    return {**{k: v for k, v in d.items() if k != "stops"}, **d["stops"][stop_id], "id": stop_id}
+
+
+def ml_model() -> dict:
+    return json.loads((PROCESSED / "ml.json").read_text(encoding="utf-8"))
+
+
 def targets() -> list[dict]:
     site = get_site()
     keep = ("id", "name", "lat", "lon", "science_tags", "note", "waypoint_sol", "elev_m")
@@ -234,6 +276,12 @@ def targets() -> list[dict]:
 
 def layer_value(layer: str, lat: float, lon: float) -> dict:
     site = get_site()
+    if layer == "geology":
+        g = awareness.geology_at(*site.rc(lat, lon))
+        return {"layer": layer, "lat": lat, "lon": lon, "value": g, "units": "unit", "provenance_id": "geology"}
+    if layer == "comms":
+        v = int(awareness.layers()["comms"][site.rc(lat, lon)])
+        return {"layer": layer, "lat": lat, "lon": lon, "value": v, "units": "line of sight 0/1", "provenance_id": "comms"}
     units = {"elevation": "m", "slope": "deg", "roughness": "0-1"}.get(layer, "0-1")
     v = site.value(layer, lat, lon)
     return {"layer": layer, "lat": lat, "lon": lon, "value": None if v is None else round(v, 4), "units": units,

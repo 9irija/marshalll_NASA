@@ -1,4 +1,4 @@
-import type { AssistantResponse, Conditions, Envelope, Hazard, ProvenanceEntry, Route, RouteResponse, Site, Target, Validation } from "./types";
+import type { AssistantResponse, Conditions, Envelope, Hazard, Mode, Pov, ProvenanceEntry, Route, RouteResponse, Similar, Site, SpaceWeather, Target, Validation } from "./types";
 
 /** API base. With the API down, everything falls back to precomputed files in /data/demo. */
 export const API = ((import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000").replace(/\/$/, "");
@@ -42,10 +42,33 @@ export const getAssumptions = () =>
 export const getConditions = (sol?: number) =>
   (state.online ? json<Conditions>(`${API}/conditions${sol ? `?sol=${sol}` : ""}`) : demo<Conditions>("conditions.json"));
 
-export async function planRoute(target: string, hours: number, hazard: Hazard | null): Promise<RouteResponse> {
-  if (!state.online) return demo<RouteResponse>(`route_${target}.json`);
-  return post<RouteResponse>("/route", { targets: [target], objective: "all", hazard, params: { max_duration_s: hours * 3600 } });
+export async function planRoute(target: string | { lat: number; lon: number }, hours: number, hazard: Hazard | null, mode: Mode = "walk"): Promise<RouteResponse> {
+  if (!state.online) {
+    if (typeof target !== "string") throw new Error("Planning to a new point needs the planner API (make dev).");
+    return demo<RouteResponse>(`route_${target}${mode === "rover" ? "_rover" : ""}.json`).catch(() => {
+      throw new Error(mode === "rover" ? "The rover cannot reach this destination within its 20 deg slope limit. Plan it as a walking EVA." : "No demo data for this plan.");
+    });
+  }
+  return post<RouteResponse>("/route", { targets: [target], objective: "all", hazard, mode, params: { max_duration_s: hours * 3600 } });
 }
+
+export async function similar(lat: number, lon: number, demoTarget?: string): Promise<Similar> {
+  if (!state.online) {
+    if (!demoTarget) throw new Error("Similarity search at a new point needs the planner API (make dev).");
+    const s = await demo<Similar>(`similar_${demoTarget}.json`);
+    s.similarity_map.url = `${DATA}/${s.similarity_map.url}`;
+    return s;
+  }
+  const s = await post<Similar>("/similar", { lat, lon, k: 6 });
+  s.similarity_map.url = `${API}${s.similarity_map.url}`;
+  return s;
+}
+
+export const spaceWeather = () => (state.online ? json<SpaceWeather>(`${API}/spaceweather`) : demo<SpaceWeather>("spaceweather.json"));
+export const pov = () => json<Pov>(`${DATA}/pov.json`);
+export const layersMeta = () => json<{ bounds: import("./types").Bounds; ml_bounds?: import("./types").Bounds;
+  geology_legend?: { symbol: string; name: string; colour: number[]; aoi_fraction: number }[];
+  ml_units_legend?: { id: number; colour: number[]; majority_usgs: string; purity: number }[] }>(`${DATA}/layers.json`);
 
 export async function getEnvelope(route: Route, target: string): Promise<Envelope> {
   if (!state.online || route.id.startsWith("demo")) {

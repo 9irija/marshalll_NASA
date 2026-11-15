@@ -15,6 +15,9 @@ data:             ## download raw NASA products (~700 MB)
 
 pipeline: data    ## reproject, derive layers, write COGs + web assets
 	$(PY) -m pipeline.preprocess
+	$(PY) -m pipeline.context
+	$(PY) -m pipeline.ml_train
+	$(PY) -m pipeline.pov
 
 corpus:           ## download + chunk the Flight Controller document corpus
 	$(PY) -m pipeline.build_corpus

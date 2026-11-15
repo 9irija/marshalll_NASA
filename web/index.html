@@ -20,6 +20,8 @@
 
   <nav class="toolbar" aria-label="Panels">
     <button data-drawer="chat" class="tool primary">Ask Flight Controller</button>
+    <button id="hud-btn" class="tool">Helmet HUD</button>
+    <button id="similar-btn" class="tool">Find similar ground <span class="ml-tag">ML</span></button>
     <button id="readout-toggle" class="tool mobile-only">Route details</button>
     <button data-drawer="validate" class="tool">Check against Perseverance</button>
     <button data-drawer="sources" class="tool">Data sources</button>
@@ -32,6 +34,12 @@
     <label class="field-label" for="target">Destination</label>
     <select id="target"></select>
     <p class="hint" id="target-note"></p>
+
+    <div class="field-label">Travel</div>
+    <div class="seg" role="radiogroup" aria-label="Travel mode">
+      <label><input type="radio" name="mode" value="walk" checked /><span>Walk</span></label>
+      <label><input type="radio" name="mode" value="rover" /><span>Rover + walkback</span></label>
+    </div>
 
     <label class="field-label" for="hours">EVA time limit <output id="hours-out">4 h</output></label>
     <input id="hours" type="range" min="1" max="8" step="0.5" value="4" />
@@ -50,12 +58,15 @@
       <summary>Map layers</summary>
       <div id="layer-list"></div>
     </details>
+    <div id="spacewx" class="conditions"></div>
     <div id="conditions" class="conditions"></div>
   </aside>
 
   <aside class="panel readout" id="readout" aria-label="Selected route">
     <div id="status" class="status" role="status"></div>
     <dl class="totals" id="totals"></dl>
+    <h3>On this route</h3>
+    <div id="situation" class="situation"></div>
     <h3>Elevation profile</h3>
     <div id="chart-elev" class="chart"></div>
     <h3>Consumables remaining</h3>
@@ -63,8 +74,11 @@
     <div class="readout-actions">
       <button id="inject-dust" class="ghost">Inject dust storm now</button>
       <button id="inject-leak" class="ghost">Inject suit leak now</button>
+      <button id="inject-sep" class="ghost">Solar particle alert now</button>
       <a id="cuff" class="ghost" target="_blank" rel="noopener">Print cuff checklist</a>
     </div>
+    <h3 id="pov-title">What you will see</h3>
+    <div id="pov" class="pov"></div>
   </aside>
 
   <section class="clock" aria-label="EVA timeline">
@@ -90,6 +104,31 @@
     <div id="drawer-body"></div>
   </aside>
 
+  <div id="hud" class="hud" hidden aria-label="Helmet heads-up display">
+    <div class="visor"></div>
+    <div class="hud-top"><div class="tape" id="hud-tape"></div></div>
+    <div class="hud-clock" id="hud-clock"></div>
+    <div class="reticle"></div>
+    <div class="hud-left">
+      <div class="gauge"><span class="k">O2</span><div class="bar" id="hud-o2"></div><span class="v" id="hud-o2-v"></span></div>
+      <div class="gauge"><span class="k">PWR</span><div class="bar" id="hud-batt"></div><span class="v" id="hud-batt-v"></span></div>
+      <div class="hud-small" id="hud-slope"></div>
+      <div class="hud-small" id="hud-rad"></div>
+    </div>
+    <div class="hud-right">
+      <div class="k">Next</div>
+      <div class="hud-next" id="hud-next"></div>
+      <div class="hud-dist"><svg id="hud-arrow" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2 L19 20 L12 15 L5 20 Z" fill="currentColor"/></svg><span id="hud-next-d"></span></div>
+      <div class="hud-small" id="hud-next-eta"></div>
+    </div>
+    <div class="hud-bottom">
+      <div id="hud-warn" class="hud-warn"></div>
+      <div id="hud-comms" class="hud-pill"></div>
+      <div class="hud-small" id="hud-geo"></div>
+    </div>
+    <button id="hud-exit" class="ghost hud-exit">Exit HUD (Esc)</button>
+  </div>
+  <div id="lightbox" class="lightbox" hidden><img id="lightbox-img" alt="" /><div id="lightbox-cap" class="hint"></div></div>
   <div id="toast" class="toast" role="alert" hidden></div>
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script type="module" src="/src/main.ts"></script>

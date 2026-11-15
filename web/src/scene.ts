@@ -1,6 +1,6 @@
 import * as Cesium from "cesium";
 import { DATA } from "./api";
-import type { Objective, Route, RoutePoint, Site, Target, Validation } from "./types";
+import type { Objective, Route, RoutePoint, SimilarCandidate, Site, Target, Validation } from "./types";
 
 export const ROUTE_COLORS: Record<Objective, string> = {
   safest: "#3987e5", fastest: "#c98500", science: "#9085e9", abort: "#e9eef2",
@@ -34,6 +34,9 @@ export class SceneLayer {
   private routeEntities = new Map<string, Cesium.Entity[]>();
   private markers: Cesium.Entity[] = [];
   private validation: Cesium.Entity[] = [];
+  private deadZones: Cesium.Entity[] = [];
+  private candidates: Cesium.Entity[] = [];
+  private query?: Cesium.Entity;
   private traverse?: Cesium.DataSource;
   astronaut: Cesium.Entity;
 
@@ -67,6 +70,18 @@ export class SceneLayer {
     handler.setInputAction((ev: { position: Cesium.Cartesian2 }) => {
       const picked = this.viewer.scene.pick(ev.position);
       const id = picked?.id?.id as string | undefined;
+      if (this.pickHandler) {
+        const ray = this.viewer.camera.getPickRay(ev.position);
+        const p = ray ? this.viewer.scene.globe.pick(ray, this.viewer.scene) : undefined;
+        if (p) {
+          const c = Cesium.Cartographic.fromCartesian(p, this.viewer.scene.globe.ellipsoid);
+          const h = this.pickHandler;
+          this.pickHandler = undefined;
+          h(Cesium.Math.toDegrees(c.latitude), Cesium.Math.toDegrees(c.longitude));
+        }
+        return;
+      }
+      if (id?.startsWith("cand:")) { this.onCandidate?.(Number(id.slice(5))); return; }
       if (id?.startsWith("target:")) onPick(id.slice(7));
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
   }
@@ -124,6 +139,46 @@ export class SceneLayer {
   }
 
   habitat?: { lat: number; lon: number };
+  pickHandler?: (lat: number, lon: number) => void;
+  onCandidate?: (i: number) => void;
+
+  /** Comms dead zones along the selected route: purple hatching over the route line. */
+  setDeadZones(r: Route | undefined) {
+    this.deadZones.forEach((e) => this.viewer.entities.remove(e));
+    this.deadZones = [];
+    for (const z of r?.context?.comms.dead_zones ?? []) {
+      const coords = r!.geometry.coordinates.slice(z.start_index, z.end_index + 1);
+      if (coords.length < 2) continue;
+      this.deadZones.push(this.viewer.entities.add({
+        polyline: {
+          positions: Cesium.Cartesian3.fromDegreesArray(coords.flatMap(([lon, lat]) => [lon, lat])), width: 11, clampToGround: true, zIndex: 5,
+          material: new Cesium.StripeMaterialProperty({ evenColor: Cesium.Color.fromCssColorString("#aa5ae6").withAlpha(0.85),
+            oddColor: Cesium.Color.TRANSPARENT, repeat: 40, orientation: Cesium.StripeOrientation.VERTICAL }),
+        },
+      }));
+    }
+  }
+
+  showCandidates(q: { lat: number; lon: number } | null, cands: SimilarCandidate[]) {
+    this.candidates.forEach((e) => this.viewer.entities.remove(e));
+    this.candidates = [];
+    if (this.query) { this.viewer.entities.remove(this.query); this.query = undefined; }
+    if (!q) return;
+    this.query = this.viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(q.lon, q.lat),
+      point: { pixelSize: 12, color: Cesium.Color.fromCssColorString("#9085e9"), outlineColor: Cesium.Color.WHITE, outlineWidth: 2,
+        heightReference: CLAMP, disableDepthTestDistance: Number.POSITIVE_INFINITY },
+      label: label("Query", -22),
+    });
+    cands.forEach((c, i) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="12" fill="#9085e9" stroke="#0f1c27" stroke-width="2"/>
+<text x="14" y="18.5" font-family="Archivo,sans-serif" font-size="13" font-weight="700" text-anchor="middle" fill="#0f1c27">${i + 1}</text></svg>`;
+      this.candidates.push(this.viewer.entities.add({
+        id: `cand:${i}`, position: Cesium.Cartesian3.fromDegrees(c.lon, c.lat),
+        billboard: { image: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, heightReference: CLAMP, disableDepthTestDistance: Number.POSITIVE_INFINITY },
+      }));
+    });
+  }
 
   private nearHabitat(pt: { lat: number; lon: number }) {
     if (!this.habitat) return false;

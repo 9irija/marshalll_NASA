@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
-from planner import envelope, fields, graph
+from pipeline.geo import load_yaml
+from planner import awareness, envelope, fields, graph
 from planner.cost import CostParams, step_cost, stop_cost
 from planner.site import Site
 
@@ -37,6 +38,7 @@ class Route:
     params: CostParams
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     compute_ms: float = 0.0
+    mode: str = "walk"
 
 
 def leg(site: Site, p: CostParams, objective: int, a: tuple[int, int], b: tuple[int, int]) -> np.ndarray:
@@ -90,22 +92,57 @@ def profile(site: Site, p: CostParams, rows: np.ndarray, cols: np.ndarray, stop_
             "hazard": site.hazard[rows, cols], "science": site.science[rows, cols]}
 
 
+def rover_config() -> dict:
+    r = load_yaml("model.yaml")["rover"]
+    return {k: v["value"] for k, v in r.items()}
+
+
+def profile_rover(site: Site, p: CostParams, rows: np.ndarray, cols: np.ndarray, stop_index: list[int]) -> dict:
+    """Riding EVA: constant rover speed slowed by roughness, crew seated (crew_metabolic_w), suit systems on."""
+    rc = rover_config()
+    res = site.grid.res_m
+    z = site.elev[rows, cols]
+    rough = site.rough_norm[rows, cols]
+    diag = (np.diff(rows) != 0) & (np.diff(cols) != 0)
+    d = np.where(diag, res * np.sqrt(2.0), res)
+    v = rc["speed_kmh"] / 3.6 * p.speed_mult
+    t = d / v * (1.0 + p.roughness_weight * 0.5 * (rough[1:] + rough[:-1]))
+    o2 = t * (rc["crew_metabolic_w"] * p.kg_o2_per_joule + p.o2_leak_kg_per_h / 3600.0)
+    b = t * p.suit_power_w / 3600.0
+    step_d, step_t, step_o2, step_b = (np.concatenate([[0.0], x]) for x in (d, t, o2, b))
+    st, so2, sb = stop_cost(p)
+    for k in stop_index:
+        step_t[k] += st
+        step_o2[k] += so2
+        step_b[k] += sb
+    return {"dist_m": np.cumsum(step_d), "elev_m": z, "slope_deg": site.slope[rows, cols].astype(np.float64),
+            "t_s": np.cumsum(step_t), "o2_kg": np.cumsum(step_o2), "batt_wh": np.cumsum(step_b),
+            "hazard": site.hazard[rows, cols], "science": site.science[rows, cols]}
+
+
 def build_route(site: Site, p: CostParams, objective: str, stops: list[Stop], o2_start: float | None = None,
-                batt_start: float | None = None) -> Route:
-    """Join A* legs through the ordered stops (first = start, last = end)."""
+                batt_start: float | None = None, mode: str = "walk") -> Route:
+    """Join A* legs through the ordered stops (first = start, last = end).
+
+    mode="rover": legs respect the rover slope limit and consumables use the riding profile, but the return
+    envelope (finish_route) keeps the walking parameters: the Apollo walkback rule.
+    """
     t0 = time.perf_counter()
     obj = graph.OBJECTIVES[objective]
+    p_path = p if mode == "walk" else replace(p, max_slope_deg=min(p.max_slope_deg, rover_config()["max_slope_deg"]))
     rows, cols, stop_index = [np.array([stops[0].row])], [np.array([stops[0].col])], []
     for a, b in zip(stops[:-1], stops[1:]):
-        path = leg(site, p, obj, (a.row, a.col), (b.row, b.col))
+        path = leg(site, p_path, obj, (a.row, a.col), (b.row, b.col))
         W = site.grid.shape[1]
         rows.append(path[1:] // W)
         cols.append(path[1:] % W)
         if b.kind != "habitat":
             stop_index.append(sum(len(r) for r in rows) - 1)
     rows_a, cols_a = np.concatenate(rows), np.concatenate(cols)
-    seg = profile(site, p, rows_a, cols_a, stop_index)
-    return finish_route(site, p, objective, rows_a, cols_a, stops, stop_index, seg, o2_start, batt_start, t0)
+    seg = (profile if mode == "walk" else profile_rover)(site, p, rows_a, cols_a, stop_index)
+    r = finish_route(site, p, objective, rows_a, cols_a, stops, stop_index, seg, o2_start, batt_start, t0)
+    r.mode = mode
+    return r
 
 
 def finish_route(site, p, objective, rows, cols, stops, stop_index, seg, o2_start, batt_start, t0) -> Route:
@@ -148,7 +185,8 @@ def to_geojson(site: Site, r: Route, max_points: int = 1500) -> dict:
     seg["slack_s"] = np.round(np.where(np.isfinite(r.margins["slack_s"][keep]), r.margins["slack_s"][keep], -1e9), 1).tolist()
     remap = {int(k): i for i, k in enumerate(keep)}
     out = {
-        "id": r.id, "objective": r.objective, "label": OBJECTIVE_LABEL.get(r.objective, r.objective),
+        "id": r.id, "objective": r.objective, "mode": r.mode,
+        "label": ("Rover: " if r.mode == "rover" else "") + OBJECTIVE_LABEL.get(r.objective, r.objective),
         "geometry": {"type": "LineString", "coordinates": [[round(float(a), 7), round(float(b), 7), round(float(z), 2)]
                                                             for a, b, z in zip(lon, lat, r.seg["elev_m"][keep])]},
         "segments": seg,
@@ -159,6 +197,11 @@ def to_geojson(site: Site, r: Route, max_points: int = 1500) -> dict:
         "totals": {k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.totals.items()},
         "compute_ms": round(r.compute_ms, 1),
     }
+    ctx = awareness.route_context(site, r.rows, r.cols, r.seg, r.params, r.mode, r.stop_index)
+    for z in ctx.get("comms", {}).get("dead_zones", []):
+        z["start_index"] = int(np.searchsorted(keep, z["start_index"]))
+        z["end_index"] = int(np.searchsorted(keep, z["end_index"]))
+    out["context"] = ctx
     for key in ("point_of_no_return", "tightest_point"):
         if key in r.margins:
             m = dict(r.margins[key])

@@ -154,14 +154,17 @@ def orienteer(site: Site, p: CostParams, start: Stop, required: list[Stop], end:
 
 
 def plan_pareto(site: Site, p: CostParams, start: Stop, targets: list[Stop], end: Stop, objectives=("safest", "fastest", "science"),
-                o2_start: float | None = None, batt_start: float | None = None) -> list[Route]:
+                o2_start: float | None = None, batt_start: float | None = None, mode: str = "walk") -> list[Route]:
     t0 = time.perf_counter()
     for t in targets:
         t.value = float(site.science[t.row, t.col])
+    if mode == "rover":   # orienteering is costed for walking; rover EVAs offer safest + fastest drives
+        objectives = tuple(o for o in objectives if o != "science") or ("safest",)
+
     def one(obj: str) -> Route:
         if obj == "science":
             return orienteer(site, p, start, targets, end, o2_start, batt_start)
-        return build_route(site, p, obj, [start, *targets, end], o2_start, batt_start)
+        return build_route(site, p, obj, [start, *targets, end], o2_start, batt_start, mode=mode)
 
     # numba kernels release the GIL, so the three objectives search in parallel
     with ThreadPoolExecutor(max_workers=len(objectives)) as ex:

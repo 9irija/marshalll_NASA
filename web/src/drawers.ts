@@ -30,6 +30,18 @@ export class Drawer {
     this.current = null;
   }
 
+  /** Open the drawer with caller-provided HTML (used by the similar-ground tool). Returns the body element. */
+  openCustom(kind: string, html: string): HTMLElement {
+    if (this.current === "validate") { this.hooks.showValidation(null); this.hooks.setEnvelopeVisible?.(true); }
+    this.current = kind;
+    this.el.classList.add("open");
+    this.el.setAttribute("aria-hidden", "false");
+    this.body.innerHTML = html;
+    return this.body;
+  }
+
+  get openKind() { return this.current; }
+
   async open(kind: string) {
     if (this.current === kind) return this.close();
     if (this.current === "validate") { this.hooks.showValidation(null); this.hooks.setEnvelopeVisible?.(true); }

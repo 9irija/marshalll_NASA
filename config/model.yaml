@@ -1,7 +1,7 @@
 # Marswalk consumables + terrain model. Every number the planner uses lives here.
 # Each parameter: value + `source` note. The UI assumptions drawer renders this file.
 # Bump `version` whenever a value changes; API responses echo it as assumptions_version.
-version: "2026.10.16-1"
+version: "2026.11.15-1"
 
 walking:
   minetti_coeffs:
@@ -140,3 +140,65 @@ science:
   min_spacing_m:
     value: 120
     source: Minimum spacing between science hotspots.
+
+comms:
+  habitat_antenna_m:
+    value: 3.0
+    source: >
+      Team assumption, height of a surface radio mast on the habitat. Direct line of sight only
+      (no orbiter relay); terrain from the HiRISE DTM, Mars curvature included.
+  suit_antenna_m:
+    value: 2.0
+    source: Team assumption, suit radio antenna on the backpack / helmet of a standing crew member.
+
+radiation:
+  gcr_dose_equivalent_msv_per_day:
+    value: 0.64
+    source: >
+      Hassler et al. (2014) Science 343, 1244797: MSL RAD measured 0.64 +/- 0.12 mSv/day dose
+      equivalent on the surface of Gale crater (absorbed dose 0.21 +/- 0.04 mGy/day). Used as the
+      galactic-cosmic-ray baseline during an EVA; no suit shielding credited (conservative).
+  career_limit_msv:
+    value: 600
+    source: >
+      NASA-STD-3001 Vol. 1 Rev. B (2022) career effective dose limit of 600 mSv for all astronauts.
+  sep_shelter_warning_min:
+    value: 30
+    source: >
+      Team planning rule. Solar energetic particle onset can follow an alert by tens of minutes; the
+      crew must be able to reach the habitat (shelter) within this time after an SEP alert, otherwise
+      the route is flagged. Not a NASA flight rule.
+
+rover:
+  speed_kmh:
+    value: 8.0
+    source: >
+      Apollo 15-17 Lunar Roving Vehicle traverse averages were roughly 7-10 km/h (max ~13 km/h);
+      team assumption for an unpressurised Mars rover on the same terrain.
+  max_slope_deg:
+    value: 20
+    source: Team assumption, below the LRV design slope of 25 deg to keep margin on loose regolith.
+  crew_metabolic_w:
+    value: 150
+    source: Team assumption, seated driving in a pressurised suit (rest 100 W plus light work).
+  walkback_rule:
+    value: true
+    source: >
+      Apollo LRV walkback constraint: a riding traverse is only allowed where the crew could walk
+      home with their suit consumables if the rover failed. The return envelope for rover EVAs is
+      therefore computed with walking costs.
+
+ml:
+  feature_res_m:
+    value: 8
+    source: Resolution of the ML feature stack (2 m grid averaged 4 x 4); CRISM is 18 m, THEMIS 100 m.
+  n_units:
+    value: 8
+    source: >
+      Number of unsupervised terrain units (k-means). Fixed in advance, close to the number of USGS
+      SIM 3464 units in the AOI, so the agreement score is not tuned to the reference map.
+  feature_weights:
+    value: {minerals: 1.0, thermal: 1.0, albedo: 1.0, terrain: 0.5}
+    source: >
+      Team assumption. Similarity search weights composition and thermal (what the ground is made of)
+      above shape (slope, roughness, relief).

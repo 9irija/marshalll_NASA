@@ -15,6 +15,9 @@ NASA archives ──download.py──> data/raw ──preprocess.py──> data/
    2 m/px, 1482 x 2024 cells) through windowed `WarpedVRT` reads, derives slope, roughness, the rock-hazard proxy
    and CRISM mineral indices, snaps the habitat to safe ground, picks 40 science hotspots and writes COGs, web
    overlays, terrain height grids and provenance.
+   `pipeline/context.py` adds the USGS SIM 3464 geologic units (polygons reprojected with GDAL/OGR), THEMIS day/night IR
+   and the comms viewshed from the habitat mast; `pipeline/ml_train.py` builds the 8 m feature stack, k-means terrain
+   units and their validation against the USGS map; `pipeline/pov.py` lists Perseverance raw images per stop.
 3. `planner/` loads `grid.npz` once per process. Searches are numba kernels on an 8-connected grid with
    directional edges.
 4. `api/service.py` is the only path to the planner; HTTP routes and Flight Controller tools both call it.
@@ -34,6 +37,11 @@ NASA archives ──download.py──> data/raw ──preprocess.py──> data/
 | Point of no return | first route point whose next step leaves the envelope | `envelope.route_margins` |
 | Most science | orienteering: coarse-grid (12 m) cost matrix, greedy value/O2 insertion, 2-opt, exact A* verification with repair | `planner/science.py` |
 | Validation | mean point-to-line deviation + discrete Frechet distance vs Perseverance traverse | `planner/validate.py` |
+| Comms line of sight | viewshed from a 3 m habitat mast to a 2 m suit antenna on the DTM at 4 m, Mars curvature d^2/2R, numba parallel | `pipeline/context.viewshed` |
+| Route context | dead zones (runs without LOS > 30 s), geologic units crossed, GCR dose = MSL RAD rate x time, worst-case time to shelter from the reverse walking field | `planner/awareness.py` |
+| Rover EVA | rover slope limit on legs, riding consumables (constant speed / roughness, seated metabolism); envelope keeps walking costs (walkback rule) | `routes.build_route(mode="rover")` |
+| Similar ground (ML) | 10 features (CRISM x4, THEMIS day/night, HiRISE albedo, slope, roughness, relief) at 8 m, median/IQR scaling, group weights, PCA(6); k-means units; nearest neighbours in PCA space ranked by percentile, screened for reachability | `pipeline/ml_train.py`, `planner/ml.py` |
+| Space weather | DONKI WSA-ENLIL runs whose impactList names Mars, SEP events, M/X flares; cached 3 h | `api/spaceweather.py` |
 | Number verification | regex extraction of number+unit, unit-aware match within 1 % or the written precision against tool inputs/outputs | `flight_controller/verifier.py` |
 
 ## API contract (implemented; OpenAPI at `/docs`)
@@ -41,14 +49,21 @@ NASA archives ──download.py──> data/raw ──preprocess.py──> data/
 GET  /layers                         -> [{id, name, type: overlay|wmts|terrain|vector, tile_url, bounds?, units, provenance_id}]
 GET  /layers/{id}/value?lat&lon      -> {layer, lat, lon, value, units, provenance_id}
 GET  /targets                        -> [{id, name, lat, lon, science_tags, note, waypoint_sol, elev_m, science_value}]
-POST /route    {start?, end? | targets[], objective: safest|fastest|science|all, round_trip?, hazard?, params?}
+POST /route    {start?, end? | targets[], objective: safest|fastest|science|all, round_trip?, hazard?, params?, mode?: walk|rover}
                -> {routes: [{id, objective, label, geometry, segments: {dist_m[], elev_m[], slope_deg[], t_s[], o2_kg[],
-                   batt_wh[], slack_s[]}, stops[], totals, point_of_no_return?, tightest_point?}], assumptions_version}
+                   batt_wh[], slack_s[]}, stops[], totals, point_of_no_return?, tightest_point?, mode,
+                   context: {comms, geology[], radiation}}], assumptions_version}
 POST /envelope {route_id | route, timestep_s, reserve_margin?, polygons?}
                -> {frames: [{t_s, area_km2, polygon?}], point_of_no_return, tightest_point,
                    deadline_field: {url, bounds, t_max_s, encoding}}
 POST /replan   {current_position, t_s, remaining: {o2_kg, batt_wh}, hazard?, objective, targets[]?, params?}
                -> same shape as /route; routes[0] is always "abort" (return home); + recommendation
+                  hazard solar_particle_event -> recommendation "shelter" + shelter {time_to_habitat_s, warning_s, within_warning}
+POST /similar  {lat, lon, k?, params?} -> {query, candidates[{lat, lon, similarity, est_round_trip_s, geology, science_value}],
+                   similarity_map {url, bounds}, model {features, validation}}
+GET  /ml                             -> ML model card (features, scaler, PCA, k-means, validation vs USGS map)
+GET  /spaceweather                   -> {status, mars_cme_impacts[], upcoming_mars_impacts[], sep_events[], flares_m_or_x[], baseline, limits}
+GET  /pov?stop_id                    -> Perseverance raw images (camera, sol, utc, mast azimuth, url, credit) per stop
 GET  /conditions?sol                 -> {sol, temp_c: {min, max}, pressure_pa, dust_opacity: null, season, sunrise, sunset, source}
 POST /validate {start?, end? | sol_from?, sol_to?} -> {planned, actual, mean_deviation_m, frechet_m, note, source}
 POST /checklist {route_id}           -> printable HTML (also GET /checklist/{route_id})
@@ -58,7 +73,8 @@ POST /assistant {messages[], confirm_constraints?}
 GET  /health, /assumptions, /manifest, /site
 ```
 Additions to the brief's contract (backwards compatible): `slack_s[]`, `tightest_point`, `deadline_field`,
-`area_km2`, `recommendation`, `mode`, `constraints`.
+`area_km2`, `recommendation`, `mode`, `constraints`, route `context`, rover `mode`, the `solar_particle_event` hazard,
+and the `/similar`, `/ml`, `/spaceweather`, `/pov` endpoints (all additive; no existing field changed).
 
 ## Envelope rendering choice
 The brief allowed mask tiles or polygons. We ship both: polygons per frame for the API and agent, and one

@@ -1,7 +1,7 @@
 """Verify that every safety-critical number in an answer came from a tool result this turn.
 
 Checked quantities (unit-aware): oxygen mass (kg, g), distance (m, km), time (s, min, h,
-H:MM), battery energy (Wh, kWh), slope / angles (deg), temperature (C), pressure (Pa),
+H:MM), battery energy (Wh, kWh), slope / angles (deg), temperature (C), pressure (Pa), radiation dose (Sv, mSv, uSv),
 percentages and coordinates (N/E). A number passes if some tool value of the same
 dimension matches within 1 % or within the rounding of the digits written, or if it is
 quoted verbatim from a retrieved document passage (document claims must carry a [n] citation).
@@ -24,9 +24,10 @@ UNITS = {
     "wh": ("energy", 1.0), "kwh": ("energy", 1000.0),
     "°": ("angle", 1.0), "deg": ("angle", 1.0), "degrees": ("angle", 1.0),
     "°c": ("temp", 1.0), "c": ("temp", 1.0), "pa": ("pressure", 1.0), "%": ("percent", 1.0),
+    "msv": ("dose", 1.0), "µsv": ("dose", 1e-3), "μsv": ("dose", 1e-3), "usv": ("dose", 1e-3), "sv": ("dose", 1000.0),
 }
 NUM = r"(?<![\w.])(-?\d+(?:,\d{3})*(?:\.\d+)?)"
-UNIT_RE = re.compile(NUM + r"\s*(°\s*c\b|kwh\b|wh\b|kilograms?\b|kg\b|grams\b|g\b|kilomet(?:re|er)s\b|km\b|met(?:re|er)s\b|m\b|"
+UNIT_RE = re.compile(NUM + r"\s*(msv\b|[µμu]sv\b|sv\b|°\s*c\b|kwh\b|wh\b|kilograms?\b|kg\b|grams\b|g\b|kilomet(?:re|er)s\b|km\b|met(?:re|er)s\b|m\b|"
                      r"seconds\b|sec\b|s\b|minutes?\b|mins?\b|hours?\b|hrs?\b|hr\b|h\b|degrees\b|deg\b|°|pa\b|%)", re.I)
 COORD_RE = re.compile(NUM + r"\s*°?\s*([NSEW])\b")
 CLOCK_RE = re.compile(r"(?<![\w.:])(\d{1,2}):([0-5]\d)(?![\d:])")
@@ -36,6 +37,8 @@ def _dim_of_key(key: str) -> list[tuple[str, float]]:
     k = key.lower()
     if k in ("lat", "lon", "seed_lat", "seed_lon"):
         return [("coord", 1.0)]
+    if "msv" in k:
+        return [("dose", 1.0)]
     if "o2" in k or k.endswith("_kg"):
         return [("mass", 1.0)]
     if k.endswith("_km"):

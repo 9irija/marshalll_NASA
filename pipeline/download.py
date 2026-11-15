@@ -1,12 +1,13 @@
-"""Download every raw NASA product the pipeline needs (idempotent, ~700 MB total).
+"""Download every raw NASA / USGS product the pipeline needs (idempotent, ~1.05 GB total).
 
 All URLs were discovered from the archive indexes (HiRISE PDS, PDS Geosciences ODE
-REST API, Mars 2020 MMGIS); none are guessed. Run: python -m pipeline.download
+REST API, Mars 2020 MMGIS, USGS Publications Warehouse); none are guessed. Run: python -m pipeline.download
 """
 from __future__ import annotations
 
 import sys
 import urllib.request
+import zipfile
 from pathlib import Path
 
 from pipeline.geo import RAW
@@ -27,6 +28,8 @@ FILES: dict[str, list[str]] = {
     + [f"{CRISM}/2007/2007_139/frt00005c5e/frt00005c5e_07_su166j_mtr3.{ext}" for ext in ("img", "hdr", "lbl")],
     "m20": [f"{MMGIS}/M20_traverse.json", f"{MMGIS}/M20_waypoints.json"],
     "meda": ["https://mars.nasa.gov/rss/api/?feed=weather&category=mars2020&feedtype=json"],
+    # USGS SIM 3464 geologic map of Jezero (Sun & Stack 2020) with THEMIS day/night IR controlled mosaics, 349 MB
+    "usgs": ["https://pubs.usgs.gov/sim/3464/sim3464_database.zip"],
 }
 NAMES = {"https://mars.nasa.gov/rss/api/?feed=weather&category=mars2020&feedtype=json": "mars2020_weather_feed.json"}
 
@@ -49,6 +52,10 @@ def main() -> int:
         d.mkdir(parents=True, exist_ok=True)
         for url in urls:
             fetch(url, d / NAMES.get(url, url.rsplit("/", 1)[-1]))
+    z = RAW / "usgs" / "sim3464_database.zip"
+    if z.exists() and not (RAW / "usgs" / "sim3464_JezeroNili_FINAL").exists():
+        with zipfile.ZipFile(z) as f:
+            f.extractall(RAW / "usgs")
     return 0
 
 

@@ -44,3 +44,13 @@ def test_bm25_ranks_relevant_chunk_first():
             {"source_id": "c", "title": "Walkback", "text": "walkback limit distance to the lunar module oxygen"}]
     hits = BM25(docs).search("walkback limit oxygen", 2)
     assert hits[0][1]["source_id"] == "c"
+
+
+def test_radiation_dose_is_checked():
+    from flight_controller.verifier import check
+
+    tool = [{"radiation": {"gcr_dose_msv": 0.0745, "max_time_to_shelter_min": 66.9}}]
+    assert check("Cosmic-ray dose on this walk is 0.075 mSv.", tool)["passed"]
+    assert check("Cosmic-ray dose on this walk is 75 µSv.", tool)["passed"]
+    bad = check("Cosmic-ray dose on this walk is 0.3 mSv.", tool)
+    assert not bad["passed"] and bad["unverified"][0]["dim"] == "dose"

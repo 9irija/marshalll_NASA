@@ -22,6 +22,17 @@ when a dust storm hits.
 - **Flight Controller.** Plain-language planning with Claude tool use; every number is verified against tool output
   in code and every claim from a document is cited.
 - **Cuff checklist.** Printable Apollo-style wrist card per route.
+- **Comms dead zones.** Radio line of sight to the habitat mast over the DTM (Mars curvature included), marked on the
+  route, the timeline and the HUD.
+- **Radiation and space weather.** Cosmic-ray dose per EVA (MSL RAD), live NASA DONKI CME arrivals at Mars, worst-case
+  time to shelter for a solar particle event, and a "shelter now" replan.
+- **Geology and thermal.** USGS SIM 3464 geologic units underfoot; THEMIS night IR (rock vs dust).
+- **Rover EVAs with the walkback rule.** Ride out, but the return envelope assumes walking home if the rover fails.
+- **ML: find similar ground.** Pick a science site; a learned embedding of minerals, thermal, brightness and terrain
+  finds the most similar reachable ground. Validated against the USGS map it never sees; the planner verifies every
+  candidate before any number is shown.
+- **Helmet HUD.** First-person view along the route with O2, power, next stop, return margin, comms and geology.
+- **What you will see.** Perseverance raw images from the sol the rover stood at each stop.
 
 ## Data (all public NASA products)
 | Layer | Product |
@@ -32,12 +43,16 @@ when a dust storm hits.
 | Minerals / science | MRO CRISM MTRDR summary products `FRT000047A3`, `FRT00005C5E` (OLINDEX3, D2300, MIN2295_2480, BD1900_2) |
 | Rover traverse, targets | Mars 2020 MMGIS `M20_traverse.json`, `M20_waypoints.json` |
 | Weather | Mars 2020 MEDA public weather feed |
+| Geology | USGS-NASA Planetary Geologic Mapping Program SIM 3464 (Sun & Stack 2020) |
+| Thermal | Mars Odyssey THEMIS day / night IR, USGS controlled mosaics |
+| Radiation, space weather | MSL RAD surface dose (Hassler et al. 2014); NASA CCMC DONKI |
+| Point-of-view images | Mars 2020 raw images (Navcam, Mastcam-Z, Hazcam) |
 Full provenance: `data/manifest.json` and the in-app "Data sources" drawer. Gaps and proxies: `docs/STUBS.md`.
 
 ## Run it
 ```bash
 make setup        # Python venv + web deps (Python 3.11+, Node 20+)
-make pipeline     # downloads ~700 MB of NASA data, builds layers (~1 min)
+make pipeline     # downloads ~1 GB of NASA/USGS data, builds layers, trains the ML model (~2 min)
 make corpus demo  # Flight Controller corpus; precomputed demo results
 make dev          # API http://localhost:8000 (docs at /docs), web http://localhost:5173
 make test check-route evals
@@ -46,8 +61,10 @@ Set `ANTHROPIC_API_KEY` (and optionally `CLAUDE_MODEL`, default `claude-sonnet-5
 without it the assistant runs in a labelled offline mode. With the API down the web app uses precomputed demo data.
 
 ## Results (this build)
-- 36 tests pass (cost model hand calculations, CRS round-trips, A* = Dijkstra, envelope monotonicity, all API endpoints,
-  verifier). 6/6 route cases pass. Offline evals 7/7 (5 need a live model).
+- 47 tests pass (cost model, CRS round-trips, A* = Dijkstra, envelope monotonicity, viewshed, rover walkback, ML search,
+  all API endpoints, verifier). 6/6 route cases pass. Offline evals 7/7 (5 need a live model).
+- Wildcat Ridge on foot: radio line of sight on 14 % of the route, up to 67 min from shelter; by rover 70 min total.
+- ML similar-ground search: 1.7-3.9x more likely than chance to land in the same USGS geologic unit.
 - Full-AOI Dijkstra on 3.0 M cells: 1.3 s. Three Pareto routes for a new target: 1.2 to 2.5 s warm.
 - HiRISE DTM vs 252 Perseverance localizations: +3.1 m mean, 3.5 m std.
 

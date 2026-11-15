@@ -13,6 +13,166 @@
   "fe_mg_smectite": "fe_mg_smectite.png",
   "carbonate": "carbonate.png",
   "hydration": "hydration.png",
-  "ortho": "ortho.png"
+  "ortho": "ortho.png",
+  "geology": "geology.png",
+  "thermal_night": "thermal_night.png",
+  "comms": "comms.png",
+  "ml_units": "ml_units.png"
+ },
+ "geology_legend": [
+  {
+   "id": 0,
+   "symbol": "Aeb",
+   "name": "Eolian bedform unit",
+   "colour": [
+    240,
+    220,
+    120
+   ],
+   "aoi_fraction": 0.0428
+  },
+  {
+   "id": 1,
+   "symbol": "NHjf2",
+   "name": "Jezero fan 2 unit",
+   "colour": [
+    61,
+    120,
+    220
+   ],
+   "aoi_fraction": 0.1622
+  },
+  {
+   "id": 2,
+   "symbol": "Njf",
+   "name": "Jezero floor unit",
+   "colour": [
+    214,
+    140,
+    69
+   ],
+   "aoi_fraction": 0.4711
+  },
+  {
+   "id": 3,
+   "symbol": "Nle",
+   "name": "Lower etched unit",
+   "colour": [
+    150,
+    90,
+    170
+   ],
+   "aoi_fraction": 0.2706
+  },
+  {
+   "id": 4,
+   "symbol": "Nue",
+   "name": "Upper etched unit",
+   "colour": [
+    200,
+    120,
+    200
+   ],
+   "aoi_fraction": 0.0533
+  },
+  {
+   "id": 5,
+   "symbol": "cr",
+   "name": "Crater rim unit",
+   "colour": [
+    230,
+    90,
+    70
+   ],
+   "aoi_fraction": 0.0
+  }
+ ],
+ "ml_units_legend": [
+  {
+   "id": 0,
+   "colour": [
+    230,
+    159,
+    0
+   ],
+   "majority_usgs": "Jezero fan 2 unit",
+   "purity": 0.271
+  },
+  {
+   "id": 1,
+   "colour": [
+    86,
+    180,
+    233
+   ],
+   "majority_usgs": "Lower etched unit",
+   "purity": 0.591
+  },
+  {
+   "id": 2,
+   "colour": [
+    0,
+    158,
+    115
+   ],
+   "majority_usgs": "Lower etched unit",
+   "purity": 0.554
+  },
+  {
+   "id": 3,
+   "colour": [
+    240,
+    228,
+    66
+   ],
+   "majority_usgs": "Jezero floor unit",
+   "purity": 0.708
+  },
+  {
+   "id": 4,
+   "colour": [
+    0,
+    114,
+    178
+   ],
+   "majority_usgs": "Jezero floor unit",
+   "purity": 0.462
+  },
+  {
+   "id": 5,
+   "colour": [
+    213,
+    94,
+    0
+   ],
+   "majority_usgs": "Jezero fan 2 unit",
+   "purity": 0.863
+  },
+  {
+   "id": 6,
+   "colour": [
+    204,
+    121,
+    167
+   ],
+   "majority_usgs": "Jezero fan 2 unit",
+   "purity": 0.822
+  },
+  {
+   "id": 7,
+   "colour": [
+    200,
+    200,
+    200
+   ],
+   "majority_usgs": "Jezero floor unit",
+   "purity": 0.61
+  }
+ ],
+ "ml_bounds": {
+  "west": 77.38999999999999,
+  "north": 18.469999999999995,
+  "east": 77.4619905191787,
+  "south": 18.420063009619977
  }
 }

@@ -14,3 +14,5 @@ uvicorn[standard]==0.54.0
 # pipeline / corpus
 pypdf==6.20.1
 scikit-image==0.26.0
+pyogrio==0.13.0
+scikit-learn==1.9.1

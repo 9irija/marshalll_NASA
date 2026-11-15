@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 
 from api import service
 from api.demo import demo_or
-from api.schemas import ChecklistRequest, EnvelopeRequest, ReplanRequest, RouteRequest, ValidateRequest
+from api.schemas import ChecklistRequest, EnvelopeRequest, ReplanRequest, RouteRequest, SimilarRequest, ValidateRequest
 from planner.checklist import cuff_html
 from planner.site import get_site
 
@@ -70,3 +70,23 @@ def post_checklist(req: ChecklistRequest):
 @router.get("/checklist/{route_id}", response_class=HTMLResponse, include_in_schema=False)
 def get_checklist(route_id: str):
     return post_checklist(ChecklistRequest(route_id=route_id))
+
+
+@router.post("/similar", summary="ML: find reachable ground similar to a point (candidates to verify with /route)")
+def post_similar(req: SimilarRequest):
+    return _guard(service.similar, req)
+
+
+@router.get("/ml", summary="ML model card: features, validation against the USGS geologic map")
+def get_ml():
+    return _guard(service.ml_model)
+
+
+@router.get("/spaceweather", summary="Space weather from NASA DONKI: CMEs predicted at Mars, SEP events, flares")
+def get_spaceweather():
+    return service.space_weather()
+
+
+@router.get("/pov", summary="Perseverance raw images at each stop (what the crew will see)")
+def get_pov(stop_id: str | None = None):
+    return _guard(service.pov, stop_id)

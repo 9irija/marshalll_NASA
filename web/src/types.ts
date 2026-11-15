@@ -1,5 +1,6 @@
 export type Objective = "safest" | "fastest" | "science" | "abort";
-export type Hazard = "dust_storm" | "suit_fault";
+export type Hazard = "dust_storm" | "suit_fault" | "solar_particle_event";
+export type Mode = "walk" | "rover";
 
 export interface Bounds { west: number; south: number; east: number; north: number }
 
@@ -9,9 +10,22 @@ export interface Segments {
 
 export interface RoutePoint { index: number; lat: number; lon: number; t_s: number; slack_s?: number; reason?: string }
 
+export interface DeadZone { start_index: number; end_index: number; t_start_s: number; duration_s: number; lat: number; lon: number }
+
+export interface RouteContext {
+  comms: { line_of_sight_fraction: number; dead_zones: DeadZone[]; time_out_of_contact_s: number; longest_dead_zone_s: number;
+    habitat_antenna_m: number; suit_antenna_m: number };
+  geology: { symbol: string; name: string; t_start_s: number; distance_m: number }[];
+  radiation: { gcr_dose_msv: number; dose_rate_msv_per_day: number; career_limit_msv: number; career_fraction: number;
+    max_time_to_shelter_s: number; max_shelter_lat: number; max_shelter_lon: number; sep_warning_s: number; shelter_mode: string;
+    sep_shelter_ok: boolean; time_beyond_shelter_s: number };
+}
+
 export interface Route {
   id: string;
   objective: Objective;
+  mode?: Mode;
+  context?: RouteContext;
   label: string;
   geometry: { type: "LineString"; coordinates: [number, number, number][] };
   segments: Segments;
@@ -25,7 +39,37 @@ export interface Route {
   tightest_point?: RoutePoint;
 }
 
-export interface RouteResponse { routes: Route[]; assumptions_version: string; hazard?: Hazard | null; recommendation?: string }
+export interface RouteResponse {
+  routes: Route[]; assumptions_version: string; hazard?: Hazard | null; recommendation?: string;
+  shelter?: { time_to_habitat_s: number; warning_s: number; within_warning: boolean };
+}
+
+export interface SimilarCandidate {
+  lat: number; lon: number; similarity: number; est_round_trip_s: number; geology: { symbol: string; name: string } | null;
+  ml_unit: number; science_value: number;
+}
+
+export interface Similar {
+  query: { lat: number; lon: number; geology: { symbol: string; name: string } | null; ml_unit: number;
+    distinctive: { feature: string; robust_z: number }[] };
+  candidates: SimilarCandidate[];
+  similarity_map: { url: string; bounds: Bounds };
+  model: { features: string[]; kmeans_k: number; validation: { nmi_vs_usgs: number; nmi_shuffled: number;
+    similarity_lift: { usgs_unit: string; base_rate: number; top5pct_same_unit: number; lift: number }[];
+    purity: { ml_unit: number; majority_usgs: string; purity: number }[] } };
+  note: string;
+}
+
+export interface SpaceWeather {
+  status: "quiet" | "watch"; window: { start: string; end: string }; cache: { fetched?: string };
+  mars_cme_impacts: { cme_id: string; cme_start: string; speed_kms: number; predicted_arrival_at_mars: string; glancing_blow: boolean; link: string }[];
+  upcoming_mars_impacts: { cme_id: string; predicted_arrival_at_mars: string; speed_kms: number; glancing_blow: boolean; link: string }[];
+  sep_events: { id: string; time: string }[]; flares_m_or_x: { class: string; peak: string }[];
+  baseline: { gcr_dose_msv_per_day: number; source: string }; rule: string; limits: string; source: { url: string };
+}
+
+export interface PovImage { camera: string; sol: number; utc: string; mast_az_deg: number | null; url: string; thumb: string; page: string; title: string; credit: string }
+export interface Pov { source: string; credit: string; note: string; stops: Record<string, { name: string; sol: number; images: PovImage[] }> }
 
 export interface Envelope {
   route_id: string;

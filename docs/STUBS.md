@@ -9,6 +9,10 @@ No synthetic data reaches the product. Synthetic arrays exist only in tests (`te
 | Rock hazard layer | 0.6 x DTM roughness + 0.4 x HiRISE orthoimage texture, normalised | No rock-abundance product at metre scale was downloadable for the AOI. THEMIS thermal inertia (100 m) and TES (3 km) are far coarser than a walking path. Labelled "proxy" in the UI and manifest. |
 | Science value | Relative CRISM index (per-observation percentile normalisation) | Summary parameters are band depths, not abundances. |
 | Habitat location | Flattest 2 m cell within 250 m of Perseverance's sol-13 localization | There is no habitat; the snap rule is documented in `aoi_resolved.json`. |
+| Comms dead zones | Direct line of sight from an assumed 3 m habitat mast on the HiRISE DTM | No relay orbiter, rover repeater or diffraction modelled; antenna heights are team assumptions. |
+| Night thermal layer | USGS controlled THEMIS night IR mosaic, stretched DN | Relative brightness, not calibrated temperature or thermal inertia; 100 m pixels (about 30 x 40 over the AOI). |
+| Radiation | MSL RAD surface dose rate measured at Gale (Hassler et al. 2014) applied to Jezero | No Jezero-specific dose measurement exists in the public archive; no suit shielding credited. |
+| ML terrain units / similar ground | Unsupervised (k-means) and nearest-neighbour search on real NASA layers | No labelled training data; validated against the USGS map it never sees (NMI 0.15, lift 1.7-3.9x). Proposes sites only. |
 | Target coordinates | Rover end-of-drive localization on or before each named sampling sol | Sample-site layer on MMGIS returns 403; names come from public NASA mission reporting. |
 
 ## Data not obtained
@@ -21,7 +25,8 @@ No synthetic data reaches the product. Synthetic arrays exist only in tests (`te
 | Minetti 2002 paper PDF | J Appl Physiol (publisher) | Coefficients used as widely reproduced; confirm against the paper (ASSUMPTIONS.md). |
 
 ## Features not built yet (brief tiers 3 / stretch)
-- Comms dead zones (viewshed) and illumination / SPICE shadows (tier 3).
+- Illumination / SPICE shadows (tier 3). Comms dead zones are built (line of sight only).
+- Mars-surface particle measurements: DONKI SEP detections are near Earth; Mars CME arrivals are WSA-ENLIL predictions.
 - Flight Controller live mode is implemented but **not run** here: no `ANTHROPIC_API_KEY` in this
   environment. Offline mode and the verifier are tested; 5 of 12 evals need the live model.
 - Deploys (Vercel / Fly.io) are configured but not executed: they need your accounts.

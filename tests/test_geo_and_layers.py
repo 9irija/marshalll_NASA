@@ -18,14 +18,14 @@ def test_mars_conventions():
     assert -180 <= g.min_lon < g.max_lon <= 180
 
 
-def test_grid_round_trip_and_pyproj_agreement():
-    from pyproj import Transformer
+def test_grid_round_trip_and_proj_agreement():
+    # PROJ through GDAL (rasterio.warp) is the independent reference for our closed-form projection.
+    from rasterio.warp import transform
 
     g = Grid.from_config()
     lon, lat = 77.4508, 18.4447
     x, y = g.lonlat_to_xy(lon, lat)
-    tr = Transformer.from_crs(GEOGRAPHIC_CRS, g.crs, always_xy=True)
-    px, py = tr.transform(lon, lat)
+    (px,), (py,) = transform(GEOGRAPHIC_CRS, g.crs, [lon], [lat])
     assert x == pytest.approx(px, abs=1e-3) and y == pytest.approx(py, abs=1e-3)
     lon2, lat2 = g.xy_to_lonlat(x, y)
     assert lon2 == pytest.approx(lon, abs=1e-9) and lat2 == pytest.approx(lat, abs=1e-9)

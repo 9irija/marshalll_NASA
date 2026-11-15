@@ -81,11 +81,13 @@ class CostParams:
             version=m["version"],
         )
         if hazard:
-            h = m["hazards"][hazard]
+            h = m["hazards"].get(hazard, {})
             if hazard == "dust_storm":
                 p = replace(p, speed_mult=h["speed_mult"]["value"], suit_power_w=p.suit_power_w + h["extra_power_w"]["value"],
                             o2_reserve_frac=p.o2_reserve_frac + h["extra_reserve_frac"]["value"],
                             batt_reserve_frac=p.batt_reserve_frac + h["extra_reserve_frac"]["value"])
+            elif hazard == "solar_particle_event":
+                pass            # no consumables change: the response is to shelter (api.service.replan)
             elif hazard == "suit_fault":
                 p = replace(p, o2_leak_kg_per_h=h["o2_leak_kg_per_h"]["value"],
                             o2_reserve_frac=p.o2_reserve_frac + h["extra_reserve_frac"]["value"])

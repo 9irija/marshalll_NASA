@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from api import service
-from api.schemas import EnvelopeRequest, LatLon, ReplanRequest, RouteRequest
+from api.schemas import EnvelopeRequest, LatLon, ReplanRequest, RouteRequest, SimilarRequest
 from flight_controller import retrieval
 
 _TARGET_IDS = "rochette, seitah, skinner_ridge, wildcat_ridge, three_forks"
@@ -19,12 +19,15 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Plan EVA routes from the habitat on the HiRISE terrain of Jezero crater. Returns safest, fastest "
                        "and most-science routes (or one objective) with distance, duration, O2 and battery use, reserves, "
                        "feasibility and the point of no return. Call this before stating any route number. Target ids: "
-                       + _TARGET_IDS + ". Use max_duration_h for EVA time limits.",
+                       + _TARGET_IDS + ". Use max_duration_h for EVA time limits. mode='rover' plans a riding EVA whose "
+                       "return envelope still assumes walking home (Apollo walkback rule). Each route also reports radio "
+                       "dead zones, cosmic-ray dose, worst-case time to shelter for a solar particle event and geology crossed.",
         "input_schema": {"type": "object", "additionalProperties": False, "properties": {
             "targets": {"type": "array", "items": {"type": "string"}, "description": "Target ids, in visiting order"},
             "objective": {"type": "string", "enum": ["all", "safest", "fastest", "science"]},
             "max_duration_h": {"type": "number", "description": "EVA time limit in hours"},
             "hazard": {"type": "string", "enum": ["dust_storm", "suit_fault"]},
+            "mode": {"type": "string", "enum": ["walk", "rover"]},
             "round_trip": {"type": "boolean"}}, "required": ["targets"]},
     },
     {
@@ -42,7 +45,7 @@ TOOLS: list[dict[str, Any]] = [
         "input_schema": {"type": "object", "additionalProperties": False, "properties": {
             "lat": {"type": "number"}, "lon": {"type": "number"}, "t_s": {"type": "number"},
             "o2_kg": {"type": "number"}, "batt_wh": {"type": "number"},
-            "hazard": {"type": "string", "enum": ["dust_storm", "suit_fault"]},
+            "hazard": {"type": "string", "enum": ["dust_storm", "suit_fault", "solar_particle_event"]},
             "targets": {"type": "array", "items": {"type": "string"}}},
             "required": ["lat", "lon", "t_s", "o2_kg", "batt_wh"]},
     },
@@ -61,6 +64,21 @@ TOOLS: list[dict[str, Any]] = [
             "layer": {"type": "string", "enum": ["elevation", "slope", "hazard", "science", "olivine", "fe_mg_smectite",
                                                  "carbonate", "hydration"]}},
             "required": ["lat", "lon", "layer"]},
+    },
+    {
+        "name": "get_space_weather",
+        "description": "Space weather from NASA DONKI: CMEs modelled (WSA-ENLIL) to reach Mars, recent SEP events and "
+                       "M/X flares, and the cosmic-ray dose baseline measured on the Mars surface by MSL RAD.",
+        "input_schema": {"type": "object", "additionalProperties": False, "properties": {}},
+    },
+    {
+        "name": "find_similar_ground",
+        "description": "Machine-learning search for ground similar to a point (CRISM minerals, THEMIS thermal, HiRISE "
+                       "brightness, slope, roughness, relief), screened for reachability. Proposes candidate sites only: "
+                       "call plan_route to a candidate before stating any O2, battery or time for it.",
+        "input_schema": {"type": "object", "additionalProperties": False, "properties": {
+            "lat": {"type": "number"}, "lon": {"type": "number"}, "k": {"type": "integer"},
+            "max_duration_h": {"type": "number"}}, "required": ["lat", "lon"]},
     },
     {
         "name": "search_docs",
@@ -82,6 +100,17 @@ def _summarise_route(r: dict) -> dict:
     out["duration_h"] = round(t["duration_s"] / 3600, 2)
     out["distance_km"] = round(t["distance_m"] / 1000, 2)
     out["stops_visited"] = [s["name"] for s in r["stops"] if s["kind"] != "habitat"]
+    out["mode"] = r.get("mode", "walk")
+    c = r.get("context") or {}
+    if c:
+        out["comms"] = {"line_of_sight_pct": round(100 * c["comms"]["line_of_sight_fraction"], 1),
+                        "dead_zones": len(c["comms"]["dead_zones"]),
+                        "time_out_of_contact_min": round(c["comms"]["time_out_of_contact_s"] / 60, 1),
+                        "longest_dead_zone_min": round(c["comms"]["longest_dead_zone_s"] / 60, 1)}
+        rad = c["radiation"]
+        out["radiation"] = {"gcr_dose_msv": rad["gcr_dose_msv"], "max_time_to_shelter_min": round(rad["max_time_to_shelter_s"] / 60, 1),
+                            "sep_warning_min": round(rad["sep_warning_s"] / 60, 1), "sep_shelter_ok": rad["sep_shelter_ok"]}
+        out["geology"] = [{"unit": g["name"], "distance_m": g["distance_m"]} for g in c["geology"]]
     for k in ("point_of_no_return", "tightest_point"):
         if r.get(k):
             p = r[k]
@@ -95,7 +124,8 @@ def run_tool(name: str, args: dict, ctx: dict) -> dict:
     if name == "plan_route":
         params = {"max_duration_s": args["max_duration_h"] * 3600} if args.get("max_duration_h") else None
         res = service.plan(RouteRequest(targets=args["targets"], objective=args.get("objective", "all"),
-                                        hazard=args.get("hazard"), round_trip=args.get("round_trip", True), params=params))
+                                        hazard=args.get("hazard"), round_trip=args.get("round_trip", True), params=params,
+                                        mode=args.get("mode", "walk")))
         ctx.setdefault("routes", []).extend(res["routes"])
         return {"assumptions_version": res["assumptions_version"], "routes": [_summarise_route(r) for r in res["routes"]]}
     if name == "get_envelope":
@@ -107,7 +137,21 @@ def run_tool(name: str, args: dict, ctx: dict) -> dict:
                                            remaining={"o2_kg": args["o2_kg"], "batt_wh": args["batt_wh"]},
                                            hazard=args.get("hazard"), targets=args.get("targets", [])))
         ctx.setdefault("routes", []).extend(res["routes"])
-        return {"recommendation": res["recommendation"], "hazard": res["hazard"], "routes": [_summarise_route(r) for r in res["routes"]]}
+        return {"recommendation": res["recommendation"], "hazard": res["hazard"], "routes": [_summarise_route(r) for r in res["routes"]],
+                **({"shelter": {"time_to_habitat_min": round(res["shelter"]["time_to_habitat_s"] / 60, 1),
+                                "warning_min": round(res["shelter"]["warning_s"] / 60, 1),
+                                "within_warning": res["shelter"]["within_warning"]}} if res.get("shelter") else {})}
+    if name == "get_space_weather":
+        w = service.space_weather()
+        return {k: w[k] for k in ("status", "window", "upcoming_mars_impacts", "mars_cme_impacts", "sep_events", "flares_m_or_x",
+                                  "baseline", "rule", "limits")}
+    if name == "find_similar_ground":
+        params = {"max_duration_s": args["max_duration_h"] * 3600} if args.get("max_duration_h") else None
+        s = service.similar(SimilarRequest(lat=args["lat"], lon=args["lon"], k=int(args.get("k", 5)), params=params))
+        return {"query": s["query"], "note": s["note"],
+                "candidates": [{**{k: c[k] for k in ("lat", "lon", "similarity", "geology", "science_value")},
+                                "screen_round_trip_min": round(c["est_round_trip_s"] / 60)} for c in s["candidates"]],
+                "validation": {"nmi_vs_usgs": s["model"]["validation"]["nmi_vs_usgs"]}}
     if name == "get_conditions":
         return service.conditions(args.get("sol"))
     if name == "get_layer_value":

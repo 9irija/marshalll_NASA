@@ -1,0 +1,170 @@
+{
+ "features": [
+  "olivine",
+  "fe_mg_smectite",
+  "carbonate",
+  "hydration",
+  "night_ir",
+  "day_ir",
+  "albedo",
+  "slope",
+  "roughness",
+  "relief"
+ ],
+ "groups": [
+  "minerals",
+  "minerals",
+  "minerals",
+  "minerals",
+  "thermal",
+  "thermal",
+  "albedo",
+  "terrain",
+  "terrain",
+  "terrain"
+ ],
+ "median": [
+  0.10094457189552486,
+  0.04775193706154823,
+  0.0,
+  0.0,
+  93.27062845230103,
+  150.09349250793457,
+  99.87647247314453,
+  3.8699050545692444,
+  0.03275270515587181,
+  -0.1668243408203125
+ ],
+ "iqr": [
+  0.36472372245043516,
+  0.2656188262626529,
+  1.0,
+  1.0,
+  52.04223322868347,
+  17.092926025390625,
+  23.32315444946289,
+  3.3850723691284657,
+  0.020098637411138043,
+  1.366180419921875
+ ],
+ "weights": [
+  0.5,
+  0.5,
+  0.5,
+  0.5,
+  0.7071067811865475,
+  0.7071067811865475,
+  1.0,
+  0.2886751345948129,
+  0.2886751345948129,
+  0.2886751345948129
+ ],
+ "pca_explained": [
+  0.3702,
+  0.2107,
+  0.1312,
+  0.0906,
+  0.0651,
+  0.0611
+ ],
+ "factor": 4,
+ "feature_res_m": 8.0,
+ "shape": [
+  370,
+  506
+ ],
+ "crism_coverage": 0.9665527187266317,
+ "valid_fraction": 0.9464320051276573,
+ "validation": {
+  "nmi_vs_usgs": 0.1474,
+  "nmi_shuffled": 0.0,
+  "purity": [
+   {
+    "ml_unit": 0,
+    "cells": 20699,
+    "majority_usgs": "Jezero fan 2 unit",
+    "purity": 0.271
+   },
+   {
+    "ml_unit": 1,
+    "cells": 34615,
+    "majority_usgs": "Lower etched unit",
+    "purity": 0.591
+   },
+   {
+    "ml_unit": 2,
+    "cells": 23572,
+    "majority_usgs": "Lower etched unit",
+    "purity": 0.554
+   },
+   {
+    "ml_unit": 3,
+    "cells": 41205,
+    "majority_usgs": "Jezero floor unit",
+    "purity": 0.708
+   },
+   {
+    "ml_unit": 4,
+    "cells": 18380,
+    "majority_usgs": "Jezero floor unit",
+    "purity": 0.462
+   },
+   {
+    "ml_unit": 5,
+    "cells": 4724,
+    "majority_usgs": "Jezero fan 2 unit",
+    "purity": 0.863
+   },
+   {
+    "ml_unit": 6,
+    "cells": 3953,
+    "majority_usgs": "Jezero fan 2 unit",
+    "purity": 0.822
+   },
+   {
+    "ml_unit": 7,
+    "cells": 30043,
+    "majority_usgs": "Jezero floor unit",
+    "purity": 0.61
+   }
+  ],
+  "similarity_lift": [
+   {
+    "usgs_unit": "Eolian bedform unit",
+    "base_rate": 0.045,
+    "top5pct_same_unit": 0.141,
+    "lift": 3.12
+   },
+   {
+    "usgs_unit": "Jezero fan 2 unit",
+    "base_rate": 0.172,
+    "top5pct_same_unit": 0.339,
+    "lift": 1.97
+   },
+   {
+    "usgs_unit": "Jezero floor unit",
+    "base_rate": 0.447,
+    "top5pct_same_unit": 0.764,
+    "lift": 1.71
+   },
+   {
+    "usgs_unit": "Lower etched unit",
+    "base_rate": 0.28,
+    "top5pct_same_unit": 0.471,
+    "lift": 1.68
+   },
+   {
+    "usgs_unit": "Upper etched unit",
+    "base_rate": 0.056,
+    "top5pct_same_unit": 0.22,
+    "lift": 3.89
+   }
+  ]
+ },
+ "model": {
+  "scaler": "median/IQR, clipped +-6",
+  "pca_components": 6,
+  "kmeans_k": 8,
+  "random_state": 0
+ }
+}

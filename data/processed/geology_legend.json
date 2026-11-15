@@ -1,0 +1,68 @@
+[
+ {
+  "id": 0,
+  "symbol": "Aeb",
+  "name": "Eolian bedform unit",
+  "colour": [
+   240,
+   220,
+   120
+  ],
+  "aoi_fraction": 0.0428
+ },
+ {
+  "id": 1,
+  "symbol": "NHjf2",
+  "name": "Jezero fan 2 unit",
+  "colour": [
+   61,
+   120,
+   220
+  ],
+  "aoi_fraction": 0.1622
+ },
+ {
+  "id": 2,
+  "symbol": "Njf",
+  "name": "Jezero floor unit",
+  "colour": [
+   214,
+   140,
+   69
+  ],
+  "aoi_fraction": 0.4711
+ },
+ {
+  "id": 3,
+  "symbol": "Nle",
+  "name": "Lower etched unit",
+  "colour": [
+   150,
+   90,
+   170
+  ],
+  "aoi_fraction": 0.2706
+ },
+ {
+  "id": 4,
+  "symbol": "Nue",
+  "name": "Upper etched unit",
+  "colour": [
+   200,
+   120,
+   200
+  ],
+  "aoi_fraction": 0.0533
+ },
+ {
+  "id": 5,
+  "symbol": "cr",
+  "name": "Crater rim unit",
+  "colour": [
+   230,
+   90,
+   70
+  ],
+  "aoi_fraction": 0.0
+ }
+]
