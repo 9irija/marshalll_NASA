@@ -60,12 +60,12 @@
   0.2886751345948129
  ],
  "pca_explained": [
-  0.3702,
-  0.2107,
-  0.1312,
-  0.0906,
-  0.0651,
-  0.0611
+  0.3309,
+  0.2405,
+  0.1372,
+  0.08,
+  0.0671,
+  0.0543
  ],
  "factor": 4,
  "feature_res_m": 8.0,
@@ -76,95 +76,121 @@
  "crism_coverage": 0.9665527187266317,
  "valid_fraction": 0.9464320051276573,
  "validation": {
-  "nmi_vs_usgs": 0.1474,
+  "nmi_vs_usgs": 0.1943,
   "nmi_shuffled": 0.0,
   "purity": [
    {
     "ml_unit": 0,
-    "cells": 20699,
+    "cells": 4354,
     "majority_usgs": "Jezero fan 2 unit",
-    "purity": 0.271
+    "purity": 0.792
    },
    {
     "ml_unit": 1,
-    "cells": 34615,
-    "majority_usgs": "Lower etched unit",
-    "purity": 0.591
+    "cells": 16727,
+    "majority_usgs": "Jezero floor unit",
+    "purity": 0.511
    },
    {
     "ml_unit": 2,
-    "cells": 23572,
+    "cells": 32910,
     "majority_usgs": "Lower etched unit",
-    "purity": 0.554
+    "purity": 0.593
    },
    {
     "ml_unit": 3,
-    "cells": 41205,
+    "cells": 35393,
     "majority_usgs": "Jezero floor unit",
-    "purity": 0.708
+    "purity": 0.577
    },
    {
     "ml_unit": 4,
-    "cells": 18380,
-    "majority_usgs": "Jezero floor unit",
-    "purity": 0.462
+    "cells": 6142,
+    "majority_usgs": "Jezero fan 2 unit",
+    "purity": 0.944
    },
    {
     "ml_unit": 5,
-    "cells": 4724,
+    "cells": 12502,
     "majority_usgs": "Jezero fan 2 unit",
-    "purity": 0.863
+    "purity": 0.471
    },
    {
     "ml_unit": 6,
-    "cells": 3953,
-    "majority_usgs": "Jezero fan 2 unit",
-    "purity": 0.822
+    "cells": 29850,
+    "majority_usgs": "Lower etched unit",
+    "purity": 0.519
    },
    {
     "ml_unit": 7,
-    "cells": 30043,
+    "cells": 39313,
     "majority_usgs": "Jezero floor unit",
-    "purity": 0.61
+    "purity": 0.735
    }
   ],
   "similarity_lift": [
    {
     "usgs_unit": "Eolian bedform unit",
     "base_rate": 0.045,
-    "top5pct_same_unit": 0.141,
-    "lift": 3.12
+    "top5pct_same_unit": 0.215,
+    "lift": 4.77
    },
    {
     "usgs_unit": "Jezero fan 2 unit",
     "base_rate": 0.172,
-    "top5pct_same_unit": 0.339,
-    "lift": 1.97
+    "top5pct_same_unit": 0.405,
+    "lift": 2.36
    },
    {
     "usgs_unit": "Jezero floor unit",
     "base_rate": 0.447,
-    "top5pct_same_unit": 0.764,
-    "lift": 1.71
+    "top5pct_same_unit": 0.775,
+    "lift": 1.73
    },
    {
     "usgs_unit": "Lower etched unit",
     "base_rate": 0.28,
-    "top5pct_same_unit": 0.471,
-    "lift": 1.68
+    "top5pct_same_unit": 0.493,
+    "lift": 1.76
    },
    {
     "usgs_unit": "Upper etched unit",
     "base_rate": 0.056,
-    "top5pct_same_unit": 0.22,
-    "lift": 3.89
+    "top5pct_same_unit": 0.29,
+    "lift": 5.13
    }
-  ]
+  ],
+  "spatial_holdout": {
+   "east_nmi": 0.1566,
+   "east_mean_lift": 1.48,
+   "east_min_lift": 1.33,
+   "supervised": {
+    "W->E": {
+     "accuracy": 0.529,
+     "majority_baseline": 0.492,
+     "balanced_accuracy": 0.676,
+     "chance": 0.333
+    },
+    "E->W": {
+     "accuracy": 0.414,
+     "majority_baseline": 0.079,
+     "balanced_accuracy": 0.322,
+     "chance": 0.2
+    }
+   },
+   "note": "West half = delta front, east half = crater floor: geology differs between halves, so transfer is hard by design."
+  }
  },
  "model": {
   "scaler": "median/IQR, clipped +-6",
+  "context_windows_m": [
+   40.0,
+   120.0
+  ],
+  "input_dims": 30,
   "pca_components": 6,
   "kmeans_k": 8,
-  "random_state": 0
+  "random_state": 0,
+  "selection": "feature set chosen on the west half of the AOI; hold-out scores reported on the east half"
  }
 }

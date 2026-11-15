@@ -3,24 +3,16 @@
 Challenge: **Interplanetary Survival Guide: Martian Map**
 
 - Demo (7 slides, PDF): [`Marswalk_demo.pdf`](Marswalk_demo.pdf)
+- Same deck as editable PowerPoint: [`Marswalk_demo.pptx`](Marswalk_demo.pptx)
   Public link once pushed: https://github.com/9irija/marshalll_NASA/blob/main/submission/Marswalk_demo.pdf
 - Code: https://github.com/9irija/marshalll_NASA
 - Technical overview: [`../docs/TECHNICAL.md`](../docs/TECHNICAL.md)
 
 ---
 
-## Summary (182 words)
+## Summary (984 characters, under the 1,500 limit)
 
-Marswalk Mission Planner is a layered 3D map of Jezero crater, the Perseverance landing site, built for the first
-astronauts who will walk there. It doesn't just display NASA data: it computes on it to answer the crew's real
-question, "Can I get there, do the science, and get home alive?" It combines eight NASA and USGS datasets: HiRISE
-terrain and imagery, CRISM minerals, THEMIS thermal, the USGS geologic map, MEDA weather, MSL RAD radiation, DONKI
-space weather and Perseverance's own traverse and photos. With them it plans routes priced in kilograms of oxygen and
-watt-hours of battery. It shows the area the astronaut can still return from shrinking as the EVA clock runs. It flags
-radio dead zones and distance from shelter for solar storms, and it replans live when a dust storm, suit leak or
-solar particle alert hits. A machine-learning search finds more ground like the best science site, and a helmet HUD
-guides the walk. Every safety number traces to NASA data and to tested code, and our routes match Perseverance's real
-drive to within about 100 m.
+Marswalk Mission Planner is a layered 3D map of Jezero crater, the Perseverance landing site, for the first astronauts who will walk there. It computes on NASA data to answer the crew's real question: can I get there, do the science, and get home alive? It fuses eight NASA and USGS datasets (HiRISE terrain and imagery, CRISM minerals, THEMIS thermal, the USGS geologic map, MEDA weather, MSL RAD radiation, DONKI space weather, Perseverance's traverse and photos) to plan routes priced in kilograms of oxygen and watt-hours of battery. It shows the area the astronaut can still return from shrinking as the EVA clock runs, flags radio dead zones and distance from shelter for solar storms, and replans live when a dust storm, suit leak or solar alert hits. A machine-learning search finds more ground like the best science site, and a helmet HUD guides the walk. Every safety number traces to NASA data and tested code; our routes match Perseverance's real drive within about 100 m.
 
 ---
 
@@ -41,7 +33,7 @@ products and reprojects them with GDAL onto one 2 m grid, about 3 million cells.
   - A rover mode follows the Apollo "walkback" rule: never drive farther than you could walk home.
 - **Machine learning.** It turns minerals, temperature, brightness and terrain into a 10-feature embedding. Click a
   site and it returns the most similar ground the crew can reach. It was validated against the USGS geologic map,
-  which it never saw: 1.7 to 3.9 times better than chance.
+  which it never saw: 1.7 to 5.1 times better than chance, and still 1.5x on half the site it was not tuned on.
 - **In the field.** A helmet HUD shows O2, power, the next stop, the return margin and comms status. Perseverance's own
   photos show what each stop looks like. An AI Flight Controller (Claude) plans in plain language, but every number it
   says is checked by code against the planner's output.

@@ -96,7 +96,7 @@
     0
    ],
    "majority_usgs": "Jezero fan 2 unit",
-   "purity": 0.271
+   "purity": 0.792
   },
   {
    "id": 1,
@@ -105,8 +105,8 @@
     180,
     233
    ],
-   "majority_usgs": "Lower etched unit",
-   "purity": 0.591
+   "majority_usgs": "Jezero floor unit",
+   "purity": 0.511
   },
   {
    "id": 2,
@@ -116,7 +116,7 @@
     115
    ],
    "majority_usgs": "Lower etched unit",
-   "purity": 0.554
+   "purity": 0.593
   },
   {
    "id": 3,
@@ -126,7 +126,7 @@
     66
    ],
    "majority_usgs": "Jezero floor unit",
-   "purity": 0.708
+   "purity": 0.577
   },
   {
    "id": 4,
@@ -135,8 +135,8 @@
     114,
     178
    ],
-   "majority_usgs": "Jezero floor unit",
-   "purity": 0.462
+   "majority_usgs": "Jezero fan 2 unit",
+   "purity": 0.944
   },
   {
    "id": 5,
@@ -146,7 +146,7 @@
     0
    ],
    "majority_usgs": "Jezero fan 2 unit",
-   "purity": 0.863
+   "purity": 0.471
   },
   {
    "id": 6,
@@ -155,8 +155,8 @@
     121,
     167
    ],
-   "majority_usgs": "Jezero fan 2 unit",
-   "purity": 0.822
+   "majority_usgs": "Lower etched unit",
+   "purity": 0.519
   },
   {
    "id": 7,
@@ -166,7 +166,7 @@
     200
    ],
    "majority_usgs": "Jezero floor unit",
-   "purity": 0.61
+   "purity": 0.735
   }
  ],
  "ml_bounds": {

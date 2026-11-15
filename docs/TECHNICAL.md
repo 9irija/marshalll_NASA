@@ -19,7 +19,7 @@ and what to do when conditions change. Marswalk computes those from NASA data, o
 | Geology underfoot | USGS SIM 3464 geologic map (Sun & Stack 2020) rasterised; units crossed per route | `pipeline/context.py` |
 | Thermal layer | THEMIS night IR: warm at night = rock, cold = dust/sand | `pipeline/context.py` |
 | Rover EVA + walkback | Riding EVA with rover slope limit; the envelope still assumes walking home (Apollo LRV walkback rule) | `planner/routes.py` |
-| ML: find similar ground | 10-feature embedding + k-means units; nearest-neighbour search screened for reachability; validated against the USGS map | `pipeline/ml_train.py`, `planner/ml.py` |
+| ML: find similar ground | Multi-scale 30-dimension embedding (10 measurements at 8, 40 and 120 m) + k-means units; nearest-neighbour search screened for reachability; spatial hold-out validation against the USGS map | `pipeline/ml_train.py`, `planner/ml.py` |
 | Helmet HUD | First-person view on the route: heading tape, O2/power, next stop distance and ETA, return margin / PNR countdown, comms, geology | `web/src/hud.ts` |
 | What you will see | Perseverance Navcam / Mastcam-Z / Hazcam raw frames from the sol the rover stood at each stop | `pipeline/pov.py` |
 | Live replanning | Dust storm, suit leak or solar particle alert from the current position and remaining consumables | `api/service.replan` |
@@ -39,6 +39,29 @@ and what to do when conditions change. Marswalk computes those from NASA data, o
 
 DTM vs 252 rover localizations: +3.1 m mean, 3.5 m std (horizontal registration holds). Gaps and proxies: `docs/STUBS.md`.
 
+### How each challenge resource is used
+| Resource named by the challenge | Used for |
+|---|---|
+| JPL Mars Trek | Streamed base imagery (HiRISE 25 cm, CTX 6 m, Viking) under every layer; Trek search found the product IDs |
+| USGS-NASA Planetary Geologic Mapping Program | SIM 3464 geologic units: map layer, "geology underfoot" per route, HUD, and the independent check of the ML model |
+| Curiosity route-map example | Inspiration for annotated routes with stops; our routes carry named stops, times and leave-by marks |
+| NASA Worldview | Earth-only (no Mars layers), so not applicable; its role (current conditions) is filled by MEDA weather and DONKI space weather |
+| Perseverance raw images | "What you will see": Navcam / Mastcam-Z / Hazcam frames from the sol the rover stood at each stop, in the panel and the HUD |
+
+### Every downloaded dataset has a job
+| Dataset | Planner | Map | ML | Checks |
+|---|---|---|---|---|
+| HiRISE DTM | cost, slope limit, envelope, comms viewshed | 3D terrain, slope, roughness | slope, roughness, relief | rover elevations (+3.1 m) |
+| HiRISE orthoimage | rock-hazard proxy | offline imagery | albedo | |
+| CRISM MTRDR x2 | most-science objective, hotspots | 4 mineral layers, science value | 4 mineral features | |
+| THEMIS day / night IR | | night thermal layer | 2 thermal features | |
+| USGS SIM 3464 | geology per route | geologic units | never used in training | ML validation |
+| MEDA weather | | conditions panel, Flight Controller | | |
+| MSL RAD + DONKI | dose, SEP shelter rule, replan | space-weather card | | |
+| Perseverance traverse + images | targets on real stops | traverse, POV photos | | route validation (106 m) |
+
+Shipped in the USGS package but not used: CTX 20 m DTMs and HRSC (the 1 m HiRISE DTM supersedes them inside the site).
+
 ## Why the approach works
 1. **The cost unit is the one that kills you.** Routes are ranked by O2 and battery, on directional edges, so uphill out
    is not downhill back.
@@ -49,11 +72,18 @@ DTM vs 252 rover localizations: +3.1 m mean, 3.5 m std (horizontal registration 
    on only 14 % of the route (2.4 h out of contact) and is up to 67 min from shelter against a 30 min solar particle
    rule. The same trip by rover takes 70 min and its walkback envelope still holds. Those are decisions a crew makes
    before stepping out.
-4. **ML proposes, physics decides.** The similarity search finds ground like a chosen science site in seconds; a
-   candidate becomes a plan only after the planner costs it. Checked against the USGS map it never sees, the top 5 %
-   most similar ground is 1.7 to 3.9 times more likely than chance to be in the same geologic unit; k-means units
-   reach NMI 0.15 against 0.00 for shuffled labels. Partial agreement is expected: the map is 1:75,000 with 100-200 m
-   contact offsets.
+4. **ML proposes, physics decides.** The similarity search finds ground like a chosen science site in about a second;
+   a candidate becomes a plan only after the planner costs it. Each 8 m cell has 10 measurements (CRISM x4, THEMIS
+   day/night, HiRISE albedo, slope, roughness, relief) plus their neighbourhood means at 40 m and 120 m, robust-scaled
+   and compressed by PCA. The feature set was chosen on the **west half** of the site only and scored on the **east
+   half** (spatial hold-out). Against the USGS map, which the model never sees:
+   - Similar-ground search: the top 5 % most similar ground is **1.7x to 5.1x** more likely than chance to be in the
+     same geologic unit (whole site); **1.48x** on the held-out east half.
+   - k-means terrain units: NMI **0.19** (shuffled labels 0.00); **0.16** on the held-out half.
+   - Supervised transfer check (gradient boosting, trained on one half, tested on the other): balanced accuracy
+     **0.68 vs 0.33 chance** west to east, **0.32 vs 0.20** east to west.
+   Agreement is partial by design: the map is 1:75,000 with 100-200 m contact offsets, and the two halves are
+   different terrains (delta front vs crater floor).
 5. **Replanning uses the same machinery.** Dust (slower, +25 W, more reserve), leak (0.05 kg/h) or a solar particle
    alert (shelter now, with the walk time against the warning rule).
 6. **It checks itself against ground truth.** Sols 389 to 415: our walker route is 3.23 km vs the rover's 3.26 km,
@@ -64,7 +94,7 @@ DTM vs 252 rover localizations: +3.1 m mean, 3.5 m std (horizontal registration 
 ## Performance
 | Operation | Time |
 |---|---|
-| Preprocess all layers from raw products | 50 s, + 15 s context layers, + 14 s ML training |
+| Preprocess all layers from raw products | 50 s, + 15 s context layers, + ~8 min ML training with hold-out checks |
 | Full-AOI Dijkstra, 3.0 M cells (numba) | 1.3 s |
 | Comms viewshed, 750 k cells at 4 m (numba parallel) | ~5 s, once |
 | Three Pareto routes, new target (warm caches) | 1.2 to 2.5 s |
@@ -73,7 +103,7 @@ DTM vs 252 rover localizations: +3.1 m mean, 3.5 m std (horizontal registration 
 ## Verification
 - 47 automated tests: cost model, CRS round trip vs PROJ, windowed reads, A* = Dijkstra, envelope monotonicity, PNR,
   viewshed (flat plane, wall shadow, curvature horizon), route context, rover walkback, ML search, SEP shelter
-  replan, space-weather parsing, every API endpoint, verifier acceptance/rejection (incl. dose).
+  replan, space-weather parsing, ML validation, every API endpoint, verifier acceptance/rejection (incl. dose).
 - 6 fixed route cases plus the Perseverance comparison: all pass. Offline evals 7/7; 5 need a live model.
 - Visual checks with Playwright screenshots (map, similar ground, HUD, readout).
 

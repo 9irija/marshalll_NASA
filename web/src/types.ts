@@ -56,7 +56,9 @@ export interface Similar {
   similarity_map: { url: string; bounds: Bounds };
   model: { features: string[]; kmeans_k: number; validation: { nmi_vs_usgs: number; nmi_shuffled: number;
     similarity_lift: { usgs_unit: string; base_rate: number; top5pct_same_unit: number; lift: number }[];
-    purity: { ml_unit: number; majority_usgs: string; purity: number }[] } };
+    purity: { ml_unit: number; majority_usgs: string; purity: number }[];
+    spatial_holdout?: { east_nmi: number; east_mean_lift: number;
+      supervised: Record<string, { balanced_accuracy: number; chance: number; accuracy: number; majority_baseline: number }> } } };
   note: string;
 }
 

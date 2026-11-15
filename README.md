@@ -64,7 +64,8 @@ without it the assistant runs in a labelled offline mode. With the API down the 
 - 47 tests pass (cost model, CRS round-trips, A* = Dijkstra, envelope monotonicity, viewshed, rover walkback, ML search,
   all API endpoints, verifier). 6/6 route cases pass. Offline evals 7/7 (5 need a live model).
 - Wildcat Ridge on foot: radio line of sight on 14 % of the route, up to 67 min from shelter; by rover 70 min total.
-- ML similar-ground search: 1.7-3.9x more likely than chance to land in the same USGS geologic unit.
+- ML similar-ground search: 1.7-5.1x more likely than chance to land in the same USGS geologic unit; 1.48x on a
+  spatial hold-out half of the site it was not tuned on.
 - Full-AOI Dijkstra on 3.0 M cells: 1.3 s. Three Pareto routes for a new target: 1.2 to 2.5 s warm.
 - HiRISE DTM vs 252 Perseverance localizations: +3.1 m mean, 3.5 m std.
 

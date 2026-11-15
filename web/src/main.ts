@@ -482,7 +482,7 @@ async function boot() {
       <p>Query: ${q.geology ? esc(q.geology.name) : "unmapped"}. What stands out there: <strong>${esc(why)}</strong>.
       Yellow on the map = top 20% most similar ground (brighter = closer match).</p>
       ${s.candidates.map((c, i) => `<div class="cand"><span class="n">${i + 1}</span><span>${c.geology ? esc(c.geology.name) : "Unmapped"}
-        <span class="meta">top ${((1 - c.similarity) * 100).toFixed(1)}% match, science ${c.science_value.toFixed(2)}, about ${fmtClock(c.est_round_trip_s)} h round trip (screen)</span></span>
+        <span class="meta">top ${(1 - c.similarity) * 100 < 0.1 ? "&lt;0.1" : ((1 - c.similarity) * 100).toFixed(1)}% match, science ${c.science_value.toFixed(2)}, about ${fmtClock(c.est_round_trip_s)} h round trip (screen)</span></span>
         <button class="ghost" data-c="${i}" ${api.state.online ? "" : "disabled title=\"Needs the planner API\""}>Plan route</button></div>`).join("")
         || `<p>No reachable candidates within this EVA limit.</p>`}
       <h3>How good is the model?</h3>
@@ -491,6 +491,11 @@ async function boot() {
       <div class="lift">${v.similarity_lift.map((l) => `<span>${esc(l.usgs_unit)}</span><b>${(l.top5pct_same_unit * 100).toFixed(0)}% vs ${(l.base_rate * 100).toFixed(0)}% (${l.lift}x)</b>`).join("")}</div>
       <p class="hint">Unsupervised terrain units (k-means, k = ${s.model.kmeans_k}) agree with the USGS map at normalised mutual information ${v.nmi_vs_usgs.toFixed(2)}
       (shuffled labels: ${v.nmi_shuffled.toFixed(2)}). Agreement is partial by design: the USGS map is drawn at 1:75,000 and its contacts can be offset 100-200 m.</p>
+      ${v.spatial_holdout ? `<p class="hint"><strong>Spatial hold-out.</strong> Features were chosen on the west half of the site only. On the unseen east half:
+      NMI ${v.spatial_holdout.east_nmi.toFixed(2)}, similarity lift ${v.spatial_holdout.east_mean_lift.toFixed(2)}x. A classifier trained on one half
+      predicts the USGS units of the other at balanced accuracy ${v.spatial_holdout.supervised["W->E"].balanced_accuracy.toFixed(2)}
+      (chance ${v.spatial_holdout.supervised["W->E"].chance.toFixed(2)}) west to east and ${v.spatial_holdout.supervised["E->W"].balanced_accuracy.toFixed(2)}
+      (chance ${v.spatial_holdout.supervised["E->W"].chance.toFixed(2)}) east to west.</p>` : ""}
       <p class="hint">${esc(s.note)}</p>`);
     body.querySelectorAll<HTMLButtonElement>("button[data-c]").forEach((b) => b.addEventListener("click", () => planTo(Number(b.dataset.c))));
   }

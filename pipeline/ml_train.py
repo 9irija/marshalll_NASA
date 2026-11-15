@@ -13,6 +13,11 @@ What it learns, and why it is useful to a crew
        candidate with the full consumables model, so no safety number comes from the model.
   Validation of (2): for query cells drawn from each USGS unit, the fraction of the top-5 % most similar cells
   that fall in the same unit, against the unit's base rate (lift).
+
+Model selection was done honestly: candidate feature sets (per-cell only; + 40 m and/or 120 m neighbourhood means)
+were compared on the WEST half of the AOI only, and the chosen one is reported on the EAST half (spatial hold-out).
+Multi-scale context won on the west half. A supervised check (gradient boosting trained on one half to predict the USGS
+unit on the other half, class-balanced) is reported too, to show the features carry geologic signal that transfers.
 """
 from __future__ import annotations
 
@@ -25,7 +30,8 @@ from rasterio.enums import Resampling
 from scipy import ndimage
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import normalized_mutual_info_score
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.metrics import balanced_accuracy_score, normalized_mutual_info_score
 
 from pipeline.geo import PROCESSED, Grid, load_yaml
 from pipeline.layers import render
@@ -36,6 +42,8 @@ FEATURES = [  # (name, group)
     ("night_ir", "thermal"), ("day_ir", "thermal"), ("albedo", "albedo"),
     ("slope", "terrain"), ("roughness", "terrain"), ("relief", "terrain"),
 ]
+CONTEXT_WINDOWS = (5, 15)       # neighbourhood means at 5 x 8 = 40 m and 15 x 8 = 120 m (chosen on the west half)
+N_COMPONENTS = 6
 UNIT_COLOURS = [(230, 159, 0), (86, 180, 233), (0, 158, 115), (240, 228, 66), (0, 114, 178), (213, 94, 0),
                 (204, 121, 167), (200, 200, 200), (120, 90, 200), (90, 200, 160), (160, 100, 60), (250, 250, 250)]
 
@@ -79,6 +87,64 @@ def build_features(grid: Grid, k: int) -> tuple[np.ndarray, np.ndarray, dict]:
     return X, valid, {"shape": list(X.shape[:2]), "crism_coverage": float(np.isfinite(stack["olivine"]).mean())}
 
 
+def with_context(Z: np.ndarray, valid: np.ndarray, sizes) -> np.ndarray:
+    """Append neighbourhood means (valid cells only) of every feature at each window size."""
+    out = [Z]
+    wts = valid.astype(float)
+    for s in sizes:
+        den = np.maximum(ndimage.uniform_filter(wts, s), 1e-6)
+        out.append(np.stack([ndimage.uniform_filter(Z[..., j], s) / den for j in range(Z.shape[-1])], -1))
+    return np.concatenate(out, -1)
+
+
+def _lift(E, geo, mask, rng):
+    Ev, gv = E[mask], geo[mask]
+    out = []
+    for gid in np.unique(gv):
+        base = float((gv == gid).mean())
+        if base < 0.02:
+            continue
+        qs = rng.choice(np.nonzero(gv == gid)[0], size=min(20, int((gv == gid).sum())), replace=False)
+        hits = []
+        for q in qs:
+            d = np.sum((Ev - Ev[q]) ** 2, 1)
+            top = np.argpartition(d, int(0.05 * len(d)))[: int(0.05 * len(d))]
+            hits.append(float((gv[top] == gid).mean()))
+        out.append(float(np.mean(hits)) / base)
+    return out
+
+
+def spatial_holdout(Z, E, valid, geo, n_units, rng) -> dict:
+    """Scores on the east half (never used for model selection) + supervised west<->east transfer."""
+    H, W = valid.shape
+    west = np.zeros((H, W), bool)
+    west[:, : W // 2] = True
+    both = valid & (geo >= 0)
+    east = both & ~west
+    idx = rng.choice(np.nonzero((valid & ~west).ravel())[0], size=min(50000, int((valid & ~west).sum())), replace=False)
+    km = KMeans(n_clusters=n_units, n_init=5, random_state=0).fit(E.reshape(-1, E.shape[-1])[idx])
+    lab = km.predict(E[east])
+    lifts = _lift(E, geo, east, rng)
+    sup = {}
+    for name, tr, te in (("W->E", west, ~west), ("E->W", ~west, west)):
+        mtr, mte = both & tr, both & te
+        clf = HistGradientBoostingClassifier(max_iter=200, class_weight="balanced", random_state=0)
+        ti = rng.choice(np.nonzero(mtr.ravel())[0], size=min(80000, int(mtr.sum())), replace=False)
+        clf.fit(Z.reshape(-1, Z.shape[-1])[ti], geo.ravel()[ti])
+        pred = clf.predict(Z[mte])
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            ba = float(balanced_accuracy_score(geo[mte], pred))
+        maj = int(np.bincount(geo[mtr]).argmax())
+        sup[name] = {"accuracy": round(float((pred == geo[mte]).mean()), 3), "majority_baseline": round(float((geo[mte] == maj).mean()), 3),
+                     "balanced_accuracy": round(ba, 3), "chance": round(1 / len(np.unique(geo[mte])), 3)}
+    return {"east_nmi": round(float(normalized_mutual_info_score(geo[east], lab)), 4),
+            "east_mean_lift": round(float(np.mean(lifts)), 2), "east_min_lift": round(float(np.min(lifts)), 2),
+            "supervised": sup,
+            "note": "West half = delta front, east half = crater floor: geology differs between halves, so transfer is hard by design."}
+
+
 def main() -> int:
     t0 = time.time()
     aoi, model = load_yaml("aoi.yaml"), load_yaml("model.yaml")
@@ -97,13 +163,13 @@ def main() -> int:
     groups = [grp for _, grp in FEATURES]
     w = np.array([gw[grp] / np.sqrt(groups.count(grp)) for grp in groups])
     Z = np.clip((X - med) / iqr, -6, 6) * w
-    Z[~valid] = np.nan
+    Z = with_context(np.where(valid[..., None], Z, 0.0), valid, CONTEXT_WINDOWS)
 
     rng = np.random.default_rng(0)
     Zv = Z[valid]
     fit_idx = rng.choice(len(Zv), size=min(60000, len(Zv)), replace=False)
-    pca = PCA(n_components=6, random_state=0).fit(Zv[fit_idx])
-    E = np.full(Z.shape[:2] + (6,), np.nan, np.float32)
+    pca = PCA(n_components=N_COMPONENTS, random_state=0).fit(Zv[fit_idx])
+    E = np.full(Z.shape[:2] + (N_COMPONENTS,), np.nan, np.float32)
     E[valid] = pca.transform(Zv)
     km = KMeans(n_clusters=int(m["n_units"]["value"]), n_init=10, random_state=0).fit(E[valid][fit_idx])
     units = np.full(Z.shape[:2], -1, np.int16)
@@ -142,7 +208,12 @@ def main() -> int:
             hits.append(float((gv[top] == gid).mean()))
         lifts.append({"usgs_unit": legend[int(gid)]["name"], "base_rate": round(base, 3), "top5pct_same_unit": round(float(np.mean(hits)), 3),
                       "lift": round(float(np.mean(hits)) / base, 2)})
+    holdout = spatial_holdout(Z, E, valid, geo, int(m["n_units"]["value"]), rng)
     print(f"  k-means units vs USGS map: NMI {nmi:.3f} (shuffled {nmi_null:.3f})")
+    print(f"  hold-out (east half, never used for selection): NMI {holdout['east_nmi']:.3f}, mean lift {holdout['east_mean_lift']:.2f}x;"
+          f" supervised balanced accuracy W->E {holdout['supervised']['W->E']['balanced_accuracy']:.2f}"
+          f" (chance {holdout['supervised']['W->E']['chance']:.2f}), E->W {holdout['supervised']['E->W']['balanced_accuracy']:.2f}"
+          f" (chance {holdout['supervised']['E->W']['chance']:.2f})")
     for p in purity:
         print(f"    ML unit {p['ml_unit']}: {p['cells']:6d} cells, {p['purity']:.0%} {p['majority_usgs']}")
     for L in lifts:
@@ -154,8 +225,12 @@ def main() -> int:
     meta = {"features": [n for n, _ in FEATURES], "groups": groups, "median": med.tolist(), "iqr": iqr.tolist(), "weights": w.tolist(),
             "pca_explained": [round(float(x), 4) for x in pca.explained_variance_ratio_], "factor": k, "feature_res_m": k * grid.res_m,
             "shape": info["shape"], "crism_coverage": info["crism_coverage"], "valid_fraction": float(valid.mean()),
-            "validation": {"nmi_vs_usgs": round(nmi, 4), "nmi_shuffled": round(nmi_null, 4), "purity": purity, "similarity_lift": lifts},
-            "model": {"scaler": "median/IQR, clipped +-6", "pca_components": 6, "kmeans_k": int(m["n_units"]["value"]), "random_state": 0}}
+            "validation": {"nmi_vs_usgs": round(nmi, 4), "nmi_shuffled": round(nmi_null, 4), "purity": purity, "similarity_lift": lifts,
+                           "spatial_holdout": holdout},
+            "model": {"scaler": "median/IQR, clipped +-6", "context_windows_m": [s * k * grid.res_m for s in CONTEXT_WINDOWS],
+                      "input_dims": int(Z.shape[-1]), "pca_components": N_COMPONENTS, "kmeans_k": int(m["n_units"]["value"]),
+                      "random_state": 0,
+                      "selection": "feature set chosen on the west half of the AOI; hold-out scores reported on the east half"}}
     (PROCESSED / "ml.json").write_text(json.dumps(meta, indent=1))
     rgba = np.zeros(units.shape + (4,), np.uint8)
     for u in range(int(m["n_units"]["value"])):

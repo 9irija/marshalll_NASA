@@ -12,7 +12,7 @@ No synthetic data reaches the product. Synthetic arrays exist only in tests (`te
 | Comms dead zones | Direct line of sight from an assumed 3 m habitat mast on the HiRISE DTM | No relay orbiter, rover repeater or diffraction modelled; antenna heights are team assumptions. |
 | Night thermal layer | USGS controlled THEMIS night IR mosaic, stretched DN | Relative brightness, not calibrated temperature or thermal inertia; 100 m pixels (about 30 x 40 over the AOI). |
 | Radiation | MSL RAD surface dose rate measured at Gale (Hassler et al. 2014) applied to Jezero | No Jezero-specific dose measurement exists in the public archive; no suit shielding credited. |
-| ML terrain units / similar ground | Unsupervised (k-means) and nearest-neighbour search on real NASA layers | No labelled training data; validated against the USGS map it never sees (NMI 0.15, lift 1.7-3.9x). Proposes sites only. |
+| ML terrain units / similar ground | Unsupervised (k-means) and nearest-neighbour search on real NASA layers | No labelled training data; validated against the USGS map it never sees (NMI 0.19, lift 1.7-5.1x; spatial hold-out NMI 0.16, lift 1.48x). Proposes sites only. |
 | Target coordinates | Rover end-of-drive localization on or before each named sampling sol | Sample-site layer on MMGIS returns 403; names come from public NASA mission reporting. |
 
 ## Data not obtained
