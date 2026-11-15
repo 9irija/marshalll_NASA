@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 const cesiumSource = "node_modules/cesium/Build/Cesium";
 
 export default defineConfig({
+  // GitHub Pages serves the app under /<repo>/; local dev and Vercel use /.
+  base: process.env.VITE_BASE ?? "/",
   resolve: {
     // Use Cesium's prebuilt ESM bundle; pre-bundling the sources trips over @zip.js exports.
     alias: [{ find: /^cesium$/, replacement: fileURLToPath(new URL(`./${cesiumSource}/index.js`, import.meta.url)) }],

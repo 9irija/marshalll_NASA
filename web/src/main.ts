@@ -55,7 +55,7 @@ async function boot() {
   const badge = $("mode-badge");
   if (!api.state.online) {
     badge.hidden = false;
-    badge.textContent = "Demo data: planner API offline";
+    badge.textContent = api.API === "offline" ? "Hosted demo: precomputed NASA-data plans" : "Demo data: planner API offline";
     $<HTMLInputElement>("hours").disabled = true;
   }
   const [terrain, site, targets, meta] = await Promise.all([createTerrain(), api.getSite(), api.getTargets(), api.layersMeta()]);

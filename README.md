@@ -8,6 +8,8 @@ when a dust storm hits.
 
 ![Return envelope closing on the habitat near the end of a 4 h EVA](docs/screenshot-envelope.png)
 
+**Live demo:** https://9irija.github.io/marshalll_NASA/ (precomputed plans for all five targets; run `make dev` for live planning)
+
 ## What it does
 - **Layered 3D site view.** HiRISE DTM terrain under NASA Trek HiRISE 25 cm / CTX / Viking imagery, with toggleable
   slope, rock-hazard, science value and four CRISM mineral layers.

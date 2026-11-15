@@ -2,7 +2,7 @@ import type { AssistantResponse, Conditions, Envelope, Hazard, Mode, Pov, Proven
 
 /** API base. With the API down, everything falls back to precomputed files in /data/demo. */
 export const API = ((import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000").replace(/\/$/, "");
-export const DATA = "/data";
+export const DATA = `${import.meta.env.BASE_URL}data`;
 
 export const state = { online: false };
 
@@ -22,6 +22,7 @@ const post = <T>(path: string, body: unknown) =>
   json<T>(`${API}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 export async function probe(): Promise<boolean> {
+  if (API === "offline") return (state.online = false);   // static hosting (GitHub Pages): demo data only
   try {
     await json(`${API}/health`, undefined, 2500);
     state.online = true;

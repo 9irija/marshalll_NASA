@@ -78,6 +78,9 @@ s.addText("Can I get there, do the science, and get home alive?", { x: 0.6, y: 3
   color: C.accent1, margin: 0, valign: "top", isTextBox: true, objectName: "Question" });
 s.addText("A layered 3D map of Jezero crater that computes on eight NASA and USGS datasets to plan a suited Marswalk: routes costed in oxygen and battery, a shrinking return envelope, live hazards, a helmet HUD and ML-guided science.",
   { x: 0.6, y: 4.8, w: 6.2, h: 1.6, fontSize: 17, color: C.accent6, margin: 0, valign: "top", isTextBox: true, objectName: "Pitch" });
+s.addText([{ text: "Try it live: ", options: { color: C.accent6 } }, { text: "9irija.github.io/marshalll_NASA", options: { bold: true, color: C.accent1,
+  hyperlink: { url: "https://9irija.github.io/marshalll_NASA/" } } }],
+  { x: 0.6, y: 6.5, w: 6.4, h: 0.45, fontSize: 18, margin: 0, isTextBox: true, objectName: "Live link" });
 s.addNotes("Marswalk answers the astronaut's real question for one spacewalk at the Perseverance landing site.");
 
 // 2. Problem -------------------------------------------------------------------------------------
@@ -200,7 +203,7 @@ shot(s, "crops/fc_wide.png", 6.85, 3.55, 5.9, 2.2, "Flight Controller screenshot
 s.addText([{ text: "Impact: ", options: { bold: true, color: C.background2 } },
   { text: "planners and crews get a decision, not a picture: go, go by rover, or don't go, with the reason. The same pipeline runs on any site with a HiRISE DTM.", options: { color: C.accent6 } }],
   { x: 0.6, y: 5.95, w: 12.15, h: 0.6, fontSize: 15, margin: 0, valign: "top", isTextBox: true, objectName: "Impact" });
-s.addText("github.com/9irija/marshalll_NASA  ·  Python (GDAL, numba, scikit-learn, FastAPI), TypeScript + CesiumJS, Claude with tool use  ·  Images: NASA/JPL-Caltech/UArizona",
+s.addText("Live demo: 9irija.github.io/marshalll_NASA  ·  Code: github.com/9irija/marshalll_NASA  ·  Python (GDAL, numba, scikit-learn, FastAPI), TypeScript + CesiumJS, Claude with tool use  ·  Images: NASA/JPL-Caltech/UArizona",
   { x: 0.6, y: 6.75, w: 11.6, h: 0.35, fontSize: 11, color: C.accent6, margin: 0, isTextBox: true, objectName: "Footer" });
 
 (async () => {

@@ -5,6 +5,7 @@ Challenge: **Interplanetary Survival Guide: Martian Map**
 - Demo (7 slides, PDF): [`Marswalk_demo.pdf`](Marswalk_demo.pdf)
 - Same deck as editable PowerPoint: [`Marswalk_demo.pptx`](Marswalk_demo.pptx)
   Public link once pushed: https://github.com/9irija/marshalll_NASA/blob/main/submission/Marswalk_demo.pdf
+- **Live demo (no setup):** https://9irija.github.io/marshalll_NASA/
 - Code: https://github.com/9irija/marshalll_NASA
 - Technical overview: [`../docs/TECHNICAL.md`](../docs/TECHNICAL.md)
 
